@@ -1,0 +1,2 @@
+%{"exos": {:hex, :exos, "0.0.1"},
+  "poolboy": {:hex, :poolboy, "1.4.2"}}
