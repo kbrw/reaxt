@@ -44,12 +44,14 @@ defmodule Mix.Tasks.Webpack.Compile do
   @shortdoc "Compiles Webpack"
   def run(_) do
     web_dir = Mix.Project.config[:web_dir] || "web"
-    if !File.exists?(web_dir<>"/node_modules"), do:
-      Mix.raise "Can't continue because javascript dependencies are absent : mix npm.install to get them"
-    webpack = "./node_modules/react_server/node_modules/webpack/bin/webpack.js"
-    server_config = "./node_modules/react_server/server.webpack.config.js"
-    System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
-    System.cmd("node",[webpack,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
+    if !File.exists?(web_dir<>"/node_modules") do
+      Mix.shell.info "javascript dependencies are missing : run `mix npm.install` to get them"
+    else
+      webpack = "./node_modules/react_server/node_modules/webpack/bin/webpack.js"
+      server_config = "./node_modules/react_server/server.webpack.config.js"
+      System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
+      System.cmd("node",[webpack,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
+    end
   end
 end
 
