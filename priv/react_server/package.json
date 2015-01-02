@@ -2,11 +2,9 @@
   "name": "react_server",
   "version": "0.0.3",
   "description": "A react templating server for erlang/elixir",
-  "devDependencies": {
-    "webpack": "^1.4.13",
-    "webpack-dev-server": "^1.6.6"
-  },
   "dependencies": {
+    "webpack": "^1.4.13",
+    "webpack-dev-server": "^1.6.6",
     "node_erlastic": "0.0.4",
     "react": "^0.12.2"
   }
