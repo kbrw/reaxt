@@ -19,7 +19,10 @@ defmodule Reaxt do
 
   defmodule App do
     use Application
-    def start(_,_), do: Supervisor.start_link(App.Sup,[], name: App.Sup)
+    def start(_,_) do
+      WebPack.Util.build_stats
+      Supervisor.start_link(App.Sup,[], name: App.Sup)
+    end
     defmodule Sup do
       use Supervisor
       def init([]) do

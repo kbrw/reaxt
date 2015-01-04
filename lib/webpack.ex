@@ -1,3 +1,16 @@
+defmodule WebPack.Util do
+  def build_stats do
+    web_app = Application.get_env :reaxt, :otp_app
+    if File.exists?("#{:code.priv_dir(web_app)}/webpack.stats.json") do
+      stats = Poison.Parser.parse!(File.read!("priv/webpack.stats.json"), keys: :atoms)
+      defmodule Elixir.WebPack do
+        @stats stats
+        def stats, do: @stats
+      end
+    end 
+  end
+end
+
 defmodule Mix.Tasks.Npm.Install do
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
@@ -25,17 +38,6 @@ defmodule Mix.Tasks.Webpack.Compile do
     {_res,0} = System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: "web")
     {json,0} = System.cmd("node",[webpack,"--colors","--json"], into: "", cd: "web")
     File.write!("priv/webpack.stats.json",json)
-    build_stats
-  end
-
-  def build_stats do
-    if File.exists?("priv/webpack.stats.json") do
-      stats = Poison.Parser.parse!(File.read!("priv/webpack.stats.json"), keys: :atoms)
-      defmodule Elixir.WebPack do
-        @stats stats
-        def stats, do: @stats
-      end
-    end 
   end
 end
 
