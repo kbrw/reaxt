@@ -30,38 +30,3 @@ defmodule Reaxt do
     end
   end
 end
-
-defmodule Mix.Tasks.Npm.Install do
-  @shortdoc "`npm install` in web_dir + npm install server side dependencies"
-  def run(args) do
-    web_dir = Mix.Project.config[:web_dir] || "web"
-    System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: web_dir)
-    System.cmd("npm",["install","#{:code.priv_dir(:reaxt)}/react_server"], into: IO.stream(:stdio, :line), cd: web_dir)
-  end
-end
-
-defmodule Mix.Tasks.Webpack.Compile do
-  @shortdoc "Compiles Webpack"
-  def run(_) do
-    web_dir = Mix.Project.config[:web_dir] || "web"
-    if !File.exists?(web_dir<>"/node_modules") do
-      Mix.shell.info "javascript dependencies are missing : run `mix npm.install` to get them"
-    else
-      webpack = "./node_modules/react_server/node_modules/webpack/bin/webpack.js"
-      server_config = "./node_modules/react_server/server.webpack.config.js"
-      System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
-      System.cmd("node",[webpack,"--colors"], into: IO.stream(:stdio, :line), cd: web_dir)
-    end
-  end
-end
-
-defmodule Mix.Tasks.Compile.Reaxt_npm do
-  def run(args) do
-    Mix.Task.run "npm.install", args
-  end
-end
-defmodule Mix.Tasks.Compile.Reaxt_webpack do
-  def run(args) do
-    Mix.Task.run "webpack.compile", args
-  end
-end

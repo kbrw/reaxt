@@ -16,6 +16,13 @@ function render_props(handler,props){
   }
 }
 
+// protocol : 
+// call {:render_tpl | :render_dyn_tpl, module, submodule | nil, arg}
+// - if :render_tpl, take handler from require("template/{module}") or require("template/{module}")[submodule]
+//   then reply %{html: ReactRenderingOf(handler,arg),init_props: json(arg)}
+// - if :render_dyn_tpl, take a handler selector function from require("template/{module}") or require("template/{module}")[submodule]
+//   this function must take 2 arguments : arg, callback, must find an appropriate handler and call
+//   callback(handler,prop) to reply the same as :render_tpl
 Server(function(term,from,state,done){
   var type = term[0],
       module = require("./../../templates/"+term[1]),

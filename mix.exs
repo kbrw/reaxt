@@ -16,6 +16,7 @@ defmodule Reaxt.Mixfile do
 
   defp deps do
     [{:exos, "1.0.0"},
-     {:poolboy, []}]
+     {:poolboy, []},
+     {:poison,"1.3.0"}]
   end
 end
