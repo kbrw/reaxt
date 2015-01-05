@@ -7,13 +7,13 @@ defmodule Reaxt do
     render({module,nil},data,opts)
   def render({module,submodule},data,opts) do
     req = if opts[:dyn_handler], do: :render_dyn_tpl, else: :render_tpl
-    Pool.transaction(:react,fn worker->
+    Pool.transaction(:react_pool,fn worker->
       GenServer.call(worker,{req,module,submodule,data})
     end)
   end
 
   def start_link([]) do
-    GenServer.start_link(Exos.Proc,{"node server",nil,[cd: '#{WebPack.Util.web_priv}']})
+    Exos.Proc.start_link("node server",nil,[cd: '#{WebPack.Util.web_priv}'])
   end
 
   defmodule App do
@@ -25,8 +25,10 @@ defmodule Reaxt do
     defmodule Sup do
       use Supervisor
       def init([]) do
-        supervise([
-          Pool.child_spec(:react,[worker_module: Reaxt,size: 1, max_overflow: 10, name: {:local,:react}], [])
+        dev_workers = if Code.ensure_loaded?(Mix) and Mix.env == :dev, do: [worker(WebPack.Compiler,[])],else: []
+        supervise(dev_workers ++ [
+          worker(WebPack.EventManager,[]),
+          Pool.child_spec(:react,[worker_module: Reaxt,size: 1, max_overflow: 10, name: {:local,:react_pool}], [])
         ], strategy: :one_for_one)
       end
     end

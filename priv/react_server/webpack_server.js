@@ -1,23 +1,27 @@
-var webpack = require("webpack"),
-    webpack_server = require("webpack-dev-server"),
-    port = require('node_erlastic').port,
-    server_config = require('./server.webpack.config.js'),
-    client_config = require("./../../webpack.config.js")
+var webpack = require("webpack"), port = require('node_erlastic').port
 
-var client_compiler = webpack(client_config)
-var server_compiler = webpack(server_config)
+var client_compiler = webpack(require("./../../webpack.config.js"))
+delete require.cache[require.resolve("./../../webpack.config.js")]
+var server_compiler = webpack(require('./server.webpack.config.js'))
 
-new WebpackDevServer(client_compiler, {
-  contentBase: "priv/static",
-  hot: true,
-  quiet: false,
-  noInfo: false,
-  lazy: true,
-  watchDelay: 300,
-  publicPath: "/assets/",
-  headers: { "X-Custom-Header": "yes" },
-  stats: { colors: true }
+var to_compile = 2
+function done_or_failed(err,stats) {
+    to_compile--
+    if(to_compile == 0){
+        if(err) port.write({event: "done", error: JSON.stringify(err)})
+        else if(stats.hasErrors()) port.write({event: "done", error: "soft fail",hash: stats.hash})
+        else    port.write({event: "done",hash: stats.hash})
+        to_compile = 2;
+    }
+}
+
+client_compiler.plugin("invalid", function() {
+  server_compiler.run(done_or_failed)
+  port.write({event: "invalid"})
 })
-  server.listen(8080, "localhost", function() {});
-  return 
+client_compiler.plugin("compile", function() { port.write({event: "compile"}) })
+client_compiler.plugin("done", function(stats) {
+  require("fs").writeFileSync(process.cwd()+"/../priv/webpack.stats.json", JSON.stringify(stats.toJson()))
 })
+server_compiler.run(done_or_failed)
+client_compiler.watch(100, done_or_failed)

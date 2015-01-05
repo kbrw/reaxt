@@ -1,8 +1,26 @@
-defmodule WebPack.Plug do
+defmodule WebPack.Plug.Static do
+  @moduledoc """
+  This plug API is the same as plug.static, 
+  but wrapped to : 
+  - wait file if compiling before serving them
+  - add server side event endpoint for webpack build events
+  - add webpack "stats" JSON getter, and stats static analyser app 
+  """
   use Plug.Router
   plug :match
-  plug Plug.Static, at: "/webpack/static", from: :reaxt
   plug :dispatch
+  plug Plug.Static, at: "/webpack/static", from: :reaxt
+
+  def init(static_opts), do: Plug.Static.init(static_opts)
+  def call(conn,static_opts) do
+    conn = plug_builder_call(conn,static_opts) #manage webpack dev specific assets
+    if conn.halted do conn else
+      if :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
+        receive do :ok->:ok after 30_000->:ok end
+      end
+      Plug.Static.call(conn,static_opts)
+    end
+  end
 
   get "/webpack/stats.json" do
     conn
@@ -13,8 +31,68 @@ defmodule WebPack.Plug do
   get "/webpack" do
     %{conn|path_info: ["webpack","static","index.html"]}
   end
+  get "/webpack/events" do
+    conn=conn
+        |> put_resp_header("content-type", "text/event-stream")
+        |> send_chunked(200)
+    if Application.get_env(:reaxt,:hot), do:
+      Plug.Conn.chunk(conn, "event: hot\ndata: nothing\n\n")
+    GenEvent.add_mon_handler(WebPack.Events,{WebPack.Plug.Static.EventHandler,make_ref},conn)
+    receive do
+      {:gen_event_EXIT,_,_} -> halt(conn)
+    end
+  end
+  get "/webpack/client.js" do
+    conn
+    |> put_resp_content_type("application/javascript")
+    |> send_file(200,"#{:code.priv_dir :reaxt}/client.js")
+    |> halt
+  end
   match _, do: conn
+
+  defmodule EventHandler do
+    use GenEvent
+    def handle_event(ev,conn) do
+      Plug.Conn.chunk(conn, "event: #{ev.event}\ndata: #{Poison.encode!(ev)}\n\n")
+      {:ok, conn}
+    end
+  end
 end
+
+defmodule WebPack.EventManager do
+  use GenEvent
+  def start_link do
+    res = GenEvent.start_link(name: WebPack.Events)
+    GenEvent.add_handler(WebPack.Events,__MODULE__,{:idle,[]})
+    res 
+  end
+
+  def handle_call({:wait?,_reply_to},{:idle,_}=state), do:
+    {:ok,:nowait,state}
+  def handle_call({:wait?,reply_to},{build_state,pending}), do:
+    {:ok,:wait,{build_state,[reply_to|pending]}}
+
+  def handle_event(%{event: "invalid"},{_,pending}), do:
+    {:ok,{:compiling,pending}}
+  def handle_event(%{event: "done"},{_,pending}) do
+    Process.exit(Process.whereis(:react_pool), :kill)
+    WebPack.Util.build_stats
+    for pid<-pending, do: send(pid,:ok)
+    {:ok,{:idle,[]}}
+  end
+  def handle_event(ev,state) do
+    IO.puts "not handle event  #{inspect ev}"
+    {:ok,state}
+  end
+end
+
+defmodule WebPack.Compiler do
+  def start_link do
+    cmd = "node ./node_modules/react_server/webpack_server"
+    Exos.Proc.start_link(cmd,:no_init,[cd: 'web'],[],WebPack.Events)
+  end
+end
+
 
 defmodule WebPack.Util do
   def web_priv do
