@@ -4,7 +4,6 @@
   "description": "A react templating server for erlang/elixir",
   "dependencies": {
     "webpack": "^1.4.13",
-    "webpack-dev-server": "^1.6.6",
     "node_erlastic": "0.0.4",
     "react": "^0.12.2"
   }

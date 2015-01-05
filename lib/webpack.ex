@@ -37,6 +37,8 @@ defmodule WebPack.Plug.Static do
         |> send_chunked(200)
     if Application.get_env(:reaxt,:hot), do:
       Plug.Conn.chunk(conn, "event: hot\ndata: nothing\n\n")
+    hash = GenServer.call(WebPack.Compiler,:get_hash)
+    Plug.Conn.chunk(conn, ~s/event: hash\ndata: {"hash": "#{hash}"}\n\n/)
     GenEvent.add_mon_handler(WebPack.Events,{WebPack.Plug.Static.EventHandler,make_ref},conn)
     receive do
       {:gen_event_EXIT,_,_} -> halt(conn)
@@ -45,7 +47,7 @@ defmodule WebPack.Plug.Static do
   get "/webpack/client.js" do
     conn
     |> put_resp_content_type("application/javascript")
-    |> send_file(200,"#{:code.priv_dir :reaxt}/client.js")
+    |> send_file(200,"#{WebPack.Util.web_priv}/client.js")
     |> halt
   end
   match _, do: conn
@@ -89,7 +91,7 @@ end
 defmodule WebPack.Compiler do
   def start_link do
     cmd = "node ./node_modules/react_server/webpack_server"
-    Exos.Proc.start_link(cmd,:no_init,[cd: 'web'],[],WebPack.Events)
+    Exos.Proc.start_link(cmd,:no_init,[cd: 'web'],[name: __MODULE__],WebPack.Events)
   end
 end
 
@@ -146,6 +148,7 @@ defmodule Mix.Tasks.Compile.Reaxt_webpack do
   def run(args) do
     if !File.exists?("web/node_modules"), do:
       Mix.Task.run("npm.install", args)
-    Mix.Task.run("webpack.compile", args)
+    if Mix.env !== :dev, do: # if env is dev, then the hot compiler is included in the application
+      Mix.Task.run("webpack.compile", args)
   end
 end

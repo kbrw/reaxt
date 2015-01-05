@@ -1,11 +1,16 @@
 var events = new EventSource("/webpack/events")
 var hot = false
+var currentHash = ""
 events.addEventListener("hot", function() {
 	hot = true
 	console.log("[WDS] Hot Module Replacement enabled.")
 })
 events.addEventListener("invalid", function() {
 	console.log("[WDS] App updated. Recompiling...")
+})
+events.addEventListener("hash", function(ev) {
+    currentHash = JSON.parse(ev.data).hash
+	console.log("[WDS] new hash : "+currentHash)
 })
 events.addEventListener("done", function(ev){
     var desc = JSON.parse(ev.data)
@@ -15,12 +20,11 @@ events.addEventListener("done", function(ev){
     }else{
         console.log("build success, reload")
 	    if(hot) {
-	    	console.log("[WDS] App hot update...");
-            var currentHash = desc.hash
-	    	window.postMessage("webpackHotUpdate" + currentHash, "*");
+	    	console.log("[WDS] App hot update...")
+	    	window.postMessage("webpackHotUpdate" + currentHash, "*")
 	    } else {
-	    	console.log("[WDS] App updated. Reloading...");
-	    	window.location.reload();
+	    	console.log("[WDS] App updated. Reloading...")
+	    	window.location.reload()
 	    }
     }
 })
