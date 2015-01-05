@@ -1,8 +1,30 @@
+defmodule WebPack.Plug do
+  use Plug.Router
+  plug :match
+  plug Plug.Static, at: "/webpack/static", from: :reaxt
+  plug :dispatch
+
+  get "/webpack/stats.json" do
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_file(200,"#{WebPack.Util.web_priv}/webpack.stats.json")
+    |> halt
+  end
+  get "/webpack" do
+    %{conn|path_info: ["webpack","static","index.html"]}
+  end
+  match _, do: conn
+end
+
 defmodule WebPack.Util do
-  def build_stats do
+  def web_priv do
     web_app = Application.get_env :reaxt, :otp_app
-    if File.exists?("#{:code.priv_dir(web_app)}/webpack.stats.json") do
-      stats = Poison.Parser.parse!(File.read!("priv/webpack.stats.json"), keys: :atoms)
+    "#{:code.priv_dir(web_app)}"
+  end
+
+  def build_stats do
+    if File.exists?("#{web_priv}/webpack.stats.json") do
+      stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"), keys: :atoms)
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats
@@ -20,12 +42,13 @@ defmodule Mix.Tasks.Npm.Install do
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
-  @shortdoc "Generate webpack stats analysing application, resulting priv/analyse is meant to be versionned"
+  @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
   def run(_args) do
+    File.rm_rf!("priv/static")
     {_,0} = System.cmd("git",["clone","-b","ajax-sse-loading","https://github.com/awetzel/analyse"], into: IO.stream(:stdio, :line))
     {_,0} = System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: "analyse")
     {_,0} = System.cmd("grunt",[], into: IO.stream(:stdio, :line), cd: "analyse")
-    File.cp_r!("analyse/dist", "priv/analyse")
+    File.cp_r!("analyse/dist", "priv/static")
     File.rm_rf!("analyse")
   end
 end

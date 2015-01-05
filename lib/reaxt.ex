@@ -13,8 +13,7 @@ defmodule Reaxt do
   end
 
   def start_link([]) do
-    web_app = Application.get_env :reaxt, :otp_app
-    GenServer.start_link(Exos.Proc,{"node server",nil,[cd: '#{:code.priv_dir(web_app)}']})
+    GenServer.start_link(Exos.Proc,{"node server",nil,[cd: '#{WebPack.Util.web_priv}']})
   end
 
   defmodule App do
