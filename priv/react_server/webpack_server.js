@@ -1,6 +1,6 @@
 var webpack = require("webpack"), port = require('node_erlastic').port
 
-var client_config = require("./../../webpack.config.js")
+var client_config = require("./client.webpack.config.js")
 if(process.argv[2] === "hot"){
     // add hotmodule plugin to client
     client_config.plugins = (client_config.plugins || []).concat([new webpack.HotModuleReplacementPlugin()])

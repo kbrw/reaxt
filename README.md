@@ -11,5 +11,6 @@ Use your *react* components into your elixir application.
 - [x] get webpack chunk names in stats on compilation events
 - [x] JS hot reloading on client side
 - [x] JS hot reloading on server side
+- [x] CSS server rendering
 - [ ] Clean documentation
 - [ ] Full example project

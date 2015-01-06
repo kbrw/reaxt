@@ -1,6 +1,7 @@
 var React = require('react'), 
     Server = require('node_erlastic').server,
-	Bert = require('node_erlastic/bert')
+	Bert = require('node_erlastic/bert'),
+    styleCollector = require("./style-collector")
 Bert.all_binaries_as_string = true
 
 function safe_json_props(props){
@@ -10,8 +11,13 @@ function safe_json_props(props){
 }
 
 function render_props(handler,props){
+  var html
+  var css = styleCollector.collect(function() {
+    html = React.renderToString(React.createElement(handler,props))
+  })
   return {
-    html: React.renderToString(React.createElement(handler,props)),
+    html: html,
+    css: css,
     init_props: safe_json_props(props)
   }
 }

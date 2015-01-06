@@ -23,8 +23,9 @@ defmodule Mix.Tasks.Webpack.Compile do
   def run(_) do
     webpack = "./node_modules/webpack/bin/webpack.js"
     server_config = "./node_modules/react_server/server.webpack.config.js"
+    client_config = "./node_modules/react_server/client.webpack.config.js"
     {_res,0} = System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: "web")
-    {json,0} = System.cmd("node",[webpack,"--colors","--json"], into: "", cd: "web")
+    {json,0} = System.cmd("node",[webpack,"--config",client_config,"--json"], into: "", cd: "web")
     File.write!("priv/webpack.stats.json",json)
   end
 end
