@@ -114,6 +114,11 @@ defmodule WebPack.Util do
             f -> f
           end
         end 
+        @append if Code.ensure_loaded?(Mix) and Mix.env == :dev,
+                   do: ~s(<script src="/webpack/client.js"></script>)
+        def header do
+          "<!-- Generated with Reaxt -->\n#{@append}"
+        end
       end
     end 
   end
