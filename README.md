@@ -12,5 +12,14 @@ Use your *react* components into your elixir application.
 - [x] JS hot reloading on client side
 - [x] JS hot reloading on server side
 - [x] CSS server rendering
+- [x] web UI to see webpack stats
+- [x] Desktop notification on compilation end
+- [x] Convert javascript errors into Elixir one, with fake stacktrace
 - [ ] Clean documentation
 - [ ] Full example project
+
+## Usage ##
+
+```elixir
+Reaxt.render!(:app,%{name: "arnaud"})
+```
