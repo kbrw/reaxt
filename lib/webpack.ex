@@ -64,21 +64,27 @@ defmodule WebPack.EventManager do
     res 
   end
 
-  def restart_pool do
-    Supervisor.terminate_child(Reaxt.App.Sup,:react)
-    Supervisor.restart_child(Reaxt.App.Sup,:react)
-  end
-
   def handle_call({:wait?,_reply_to},{:idle,_}=state), do:
     {:ok,:nowait,state}
   def handle_call({:wait?,reply_to},{build_state,pending}), do:
     {:ok,:wait,{build_state,[reply_to|pending]}}
 
-  def handle_event(%{event: "done"},{state,pending}) do
+  def handle_event(%{event: "done"}=ev,{state,pending}) do
     WebPack.Util.build_stats
-    if state == :wait_server_ready, 
-      do: send(Process.whereis(Reaxt.App.Sup),:server_ready),
-      else: restart_pool
+    case {ev,state} do
+      {%{error: "soft fail"},:wait_server_ready}->
+        IO.puts "Compilation Error: see /webpack#errors"
+        send(Process.whereis(Reaxt.App.Sup),:server_ready)
+      {%{error: error},:wait_server_ready}->
+        IO.puts "FATAL Error: cannot compile server_side renderer"
+        IO.puts error
+        System.halt(1)
+      {_,:wait_server_ready}->
+        send(Process.whereis(Reaxt.App.Sup),:server_ready)
+      _->
+        Supervisor.terminate_child(Reaxt.App.Sup,:react)
+        Supervisor.restart_child(Reaxt.App.Sup,:react)
+    end
     for pid<-pending, do: send(pid,:ok)
     {:ok,{:idle,[]}}
   end
