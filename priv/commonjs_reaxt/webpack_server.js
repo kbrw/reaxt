@@ -28,11 +28,12 @@ var server_config = require('./server.webpack.config.js')
 
 var to_compile = 2
 var last_hash = ""
+var client_stats
 function done_or_failed(err,stats) {
     to_compile--
     if(to_compile == 0){
         if(err) port.write({event: "done", error: JSON.stringify(err)})
-        else if(stats.hasErrors()) port.write({event: "done", error: "soft fail"})
+        else if(client_stats.hasErrors()) port.write({event: "done", error: "soft fail"})
         else    port.write({event: "done"})
         to_compile = 2;
     }
@@ -45,6 +46,7 @@ client_compiler.plugin("invalid", function() {
 client_compiler.plugin("compile", function() { port.write({event: "compile"}) })
 client_compiler.plugin("done", function(stats) {
   last_hash = stats.hash
+  client_stats = stats
   port.write({event: "hash",hash: last_hash})
   require("fs").writeFileSync(process.cwd()+"/../priv/webpack.stats.json", JSON.stringify(stats.toJson()))
 })
