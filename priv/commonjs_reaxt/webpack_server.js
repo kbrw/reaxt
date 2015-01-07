@@ -1,4 +1,6 @@
-var webpack = require("webpack"), port = require('node_erlastic').port
+var webpack = require("webpack"), 
+    port = require('node_erlastic').port,
+    server = require('node_erlastic').server
 
 var client_config = require("./client.webpack.config.js")
 if(process.argv[2] === "hot"){
@@ -22,17 +24,13 @@ if(process.argv[2] === "hot"){
 }
 var client_compiler = webpack(client_config)
 
-// server reload a blank client config to change it
-delete require.cache[require.resolve("./../../webpack.config.js")]
-var server_config = require('./server.webpack.config.js')
-
 var to_compile = 2
 var last_hash = ""
-var client_stats
-function done_or_failed(err,stats) {
+var client_stats,client_err
+function maybe_done() {
     to_compile--
     if(to_compile == 0){
-        if(err) port.write({event: "done", error: JSON.stringify(err)})
+        if(client_err) port.write({event: "done", error: JSON.stringify(client_err)})
         else if(client_stats.hasErrors()) port.write({event: "done", error: "soft fail"})
         else    port.write({event: "done"})
         to_compile = 2;
@@ -40,15 +38,24 @@ function done_or_failed(err,stats) {
 }
 
 client_compiler.plugin("invalid", function() {
-  webpack(server_config).run(done_or_failed)
   port.write({event: "invalid"})
 })
-client_compiler.plugin("compile", function() { port.write({event: "compile"}) })
+client_compiler.plugin("compile", function() { 
+  port.write({event: "compile"}) 
+})
+client_compiler.plugin("failed", function(error) {
+  client_err = error
+  maybe_done()
+})
 client_compiler.plugin("done", function(stats) {
   last_hash = stats.hash
   client_stats = stats
   port.write({event: "hash",hash: last_hash})
-  require("fs").writeFileSync(process.cwd()+"/../priv/webpack.stats.json", JSON.stringify(stats.toJson()))
+  require("fs").writeFile(process.cwd()+"/../priv/webpack.stats.json", JSON.stringify(stats.toJson()), maybe_done)
 })
-webpack(server_config).run(done_or_failed)
-client_compiler.watch(100, done_or_failed)
+port.write({event: "invalid"})
+client_compiler.watch(100, function(){})
+server(function(req,reply_to,state,done){
+  maybe_done() // receive message indicating server compilation end
+  done("noreply")
+})

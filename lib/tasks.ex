@@ -20,13 +20,19 @@ end
 
 defmodule Mix.Tasks.Webpack.Compile do
   @shortdoc "Compiles Webpack"
+  @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
-    webpack = "./node_modules/webpack/bin/webpack.js"
-    server_config = "./node_modules/reaxt/server.webpack.config.js"
-    client_config = "./node_modules/reaxt/client.webpack.config.js"
-    {_res,0} = System.cmd("node",[webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: "web")
-    {json,0} = System.cmd("node",[webpack,"--config",client_config,"--json"], into: "", cd: "web")
+    {_res,0} = compile_server
+    {json,0} = compile_client
     File.write!("priv/webpack.stats.json",json)
+  end
+  def compile_server() do
+    server_config = "./node_modules/reaxt/server.webpack.config.js"
+    System.cmd("node",[@webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: "web")
+  end
+  def compile_client() do
+    client_config = "./node_modules/reaxt/client.webpack.config.js"
+    System.cmd("node",[@webpack,"--config",client_config,"--json"], into: "", cd: "web")
   end
 end
 

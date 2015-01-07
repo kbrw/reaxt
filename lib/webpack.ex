@@ -59,39 +59,45 @@ end
 
 defmodule WebPack.EventManager do
   use GenEvent
+  require Logger
   def start_link do
     res = GenEvent.start_link(name: WebPack.Events)
-    GenEvent.add_handler(WebPack.Events,__MODULE__,{:wait_server_ready,[]})
+    GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false})
     receive do :server_ready-> :ok end
     res 
   end
 
-  def handle_call({:wait?,_reply_to},{:idle,_}=state), do:
+  def handle_call({:wait?,_reply_to},%{compiling: false}=state), do:
     {:ok,:nowait,state}
-  def handle_call({:wait?,reply_to},{build_state,pending}), do:
-    {:ok,:wait,{build_state,[reply_to|pending]}}
+  def handle_call({:wait?,reply_to},state), do:
+    {:ok,:wait,%{state|pending: [reply_to|state.pending]}}
 
-  def handle_event(%{event: "done"}=ev,{state,pending}) do
-    WebPack.Util.build_stats
-    case {ev,state} do
-      {%{error: "soft fail"},:wait_server_ready}->
-        IO.puts "Compilation Error: see /webpack#errors"
+  def handle_event(%{event: "done"}=ev,state) do
+    spawn fn-> WebPack.Util.build_stats end
+    case {ev,state.init} do
+      {%{error: "soft fail"},true}->
+        Logger.error("Compilation Error: see /webpack#errors")
         send(Process.whereis(Reaxt.App.Sup),:server_ready)
-      {%{error: error},:wait_server_ready}->
-        IO.puts "FATAL Error: cannot compile server_side renderer"
-        IO.puts error
+      {%{error: error},true}->
+        Logger.error("cannot compile server_side renderer")
+        Logger.error(error)
         System.halt(1)
-      {_,:wait_server_ready}->
+      {_,true}->
         send(Process.whereis(Reaxt.App.Sup),:server_ready)
-      _->
+      {_,false}->
         Supervisor.terminate_child(Reaxt.App.Sup,:react)
         Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
-    for pid<-pending, do: send(pid,:ok)
-    {:ok,{:idle,[]}}
+    for pid<-state.pending, do: send(pid,:ok)
+    {:ok,%{state| compiling: false, pending: [], init: false}}
   end
-  def handle_event(%{event: "invalid"},{_,pending}), do:
-    {:ok,{:compiling,pending}}
+  def handle_event(%{event: "invalid"},state) do
+    spawn fn-> #async compile server on invalid file
+      Mix.Tasks.Webpack.Compile.compile_server
+      GenServer.cast(WebPack.Compiler,:server_build)
+    end
+    {:ok,%{state|compiling: true}}
+  end
   def handle_event(_ev,state), do: {:ok,state}
 end
 
@@ -99,10 +105,9 @@ defmodule WebPack.Compiler do
   def start_link do
     cmd = "node ./node_modules/reaxt/webpack_server"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,:no_init,[cd: 'web'],[name: __MODULE__],WebPack.Events)
+    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: 'web'],[name: __MODULE__],WebPack.Events)
   end
 end
-
 
 defmodule WebPack.Util do
   def web_priv do
