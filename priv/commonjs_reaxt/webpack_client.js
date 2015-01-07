@@ -25,7 +25,7 @@ events.addEventListener("done", function(ev){
             console.log(JSON.parse(desc.error))
         }
         else{
-            var notif = new Notification("Build errors",{body: "Click to see them",icon: icon})
+            var notif = new Notification("Build errors",{body: "Click me to see them",icon: icon})
             notif.onclick = function(){
                 window.open(location.protocol + '//' + location.host+'/webpack#errors','_newtab')
             }
@@ -35,15 +35,15 @@ events.addEventListener("done", function(ev){
         console.log("build success, reload")
         var msg
 	    if(hot) {
-            msg = "App hot update"
+            msg = "Build Success, hot reload"
 	    	console.log("[WDS] App hot update...")
 	    	window.postMessage("webpackHotUpdate" + currentHash, "*")
 	    } else {
-            msg = "Webpage reload"
+            msg = "Build Success, reload"
 	    	console.log("[WDS] App updated. Reloading...")
 	    	window.location.reload()
 	    }
-        var notif = new Notification("Build success",{body: msg,icon: icon})
+        var notif = new Notification(msg,{body: "Click me",icon: icon})
         notif.onclick = function(){
             window.open(location.protocol + '//' + location.host+'/webpack','_newtab')
         }
