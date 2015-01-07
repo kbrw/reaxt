@@ -10,12 +10,15 @@ function safe_json_props(props){
          .replace(/<!--/g, '<\\!--')
 }
 
+var normal_write = process.stdout.write
 function render_props(handler,props){
   try{
     var html
+    process.stdout.write = function(){}
     var css = styleCollector.collect(function() {
       html = React.renderToString(React.createElement(handler,props))
     })
+    process.stdout.write = normal_write
     return Bert.tuple(Bert.atom("ok"),{
       html: html,
       css: css,
