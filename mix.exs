@@ -11,7 +11,7 @@ defmodule Reaxt.Mixfile do
   def application do
     [applications: [:logger, :poolboy, :exos],
      mod: {Reaxt.App,[]},
-     env: [otp_app: :reaxt]]
+     env: [otp_app: :reaxt, hot: false]]
   end
 
   defp deps do
