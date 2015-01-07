@@ -11,7 +11,12 @@ defmodule Reaxt.Mixfile do
   def application do
     [applications: [:logger, :poolboy, :exos],
      mod: {Reaxt.App,[]},
-     env: [otp_app: :reaxt, hot: false]]
+     env: [
+       otp_app: :reaxt, #the OTP application containing compiled JS server
+       hot: false, # false | true | :client hot compilation and loading
+       pool_size: 1, #pool size of react renderes
+       pool_max_overflow: 5 #maximum pool extension when the pool is full
+     ]]
   end
 
   defp deps do
