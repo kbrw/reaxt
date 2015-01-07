@@ -15,7 +15,8 @@ defmodule WebPack.Plug.Static do
   def call(conn,static_opts) do
     conn = plug_builder_call(conn,static_opts) #manage webpack dev specific assets in this builder
     if conn.halted do conn else
-      if :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
+      if Application.get_env(:reaxt,:hot) && 
+           :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
         receive do :ok->:ok after 30_000->:ok end # if a compil is running, wait its end before serving asset
       end
       Plug.Static.call(conn,static_opts) # finally serve static files as with Plug.Static
@@ -33,9 +34,10 @@ defmodule WebPack.Plug.Static do
     conn=conn
         |> put_resp_header("content-type", "text/event-stream")
         |> send_chunked(200)
-    if Application.get_env(:reaxt,:hot), do:
-      Plug.Conn.chunk(conn, "event: hot\ndata: nothing\n\n")
-    GenEvent.add_mon_handler(WebPack.Events,{WebPack.Plug.Static.EventHandler,make_ref},conn)
+    hot? = Application.get_env(:reaxt,:hot)
+    if hot? == :client, do: Plug.Conn.chunk(conn, "event: hot\ndata: nothing\n\n")
+    if hot?, do:
+      GenEvent.add_mon_handler(WebPack.Events,{WebPack.Plug.Static.EventHandler,make_ref},conn)
     receive do {:gen_event_EXIT,_,_} -> halt(conn) end
   end
   get "/webpack/client.js" do
@@ -96,7 +98,7 @@ end
 defmodule WebPack.Compiler do
   def start_link do
     cmd = "node ./node_modules/reaxt/webpack_server"
-    hot_arg = if Application.get_env(:reaxt,:hot), do: " hot",else: ""
+    hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,:no_init,[cd: 'web'],[name: __MODULE__],WebPack.Events)
   end
 end
@@ -120,11 +122,8 @@ defmodule WebPack.Util do
             f -> f
           end
         end 
-        @append if Code.ensure_loaded?(Mix) and Mix.env == :dev,
-                   do: ~s(<script src="/webpack/client.js"></script>)
-        def header do
-          "<!-- Generated with Reaxt -->\n#{@append}"
-        end
+        @header if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
+        def header, do: @header
       end
     end 
   end

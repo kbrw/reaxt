@@ -34,7 +34,8 @@ defmodule Mix.Tasks.Compile.Reaxt_webpack do
   def run(args) do
     if !File.exists?("web/node_modules"), do:
       Mix.Task.run("npm.install", args)
-    if Mix.env !== :dev, do: # if env is dev, then the hot compiler is included in the application
+
+    if !Application.get_env(:reaxt,:hot), do:
       Mix.Task.run("webpack.compile", args)
   end
 end

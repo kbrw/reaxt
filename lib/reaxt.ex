@@ -73,7 +73,7 @@ defmodule Reaxt do
     defmodule Sup do
       use Supervisor
       def init([]) do
-        dev_workers = if Code.ensure_loaded?(Mix) and Mix.env == :dev, 
+        dev_workers = if Application.get_env(:reaxt,:hot), 
            do: [worker(WebPack.Compiler,[]),worker(WebPack.EventManager,[])], else: []
         supervise(dev_workers ++ [
           Pool.child_spec(:react,[worker_module: Reaxt,size: 1, max_overflow: 10, name: {:local,:react_pool}], [])
