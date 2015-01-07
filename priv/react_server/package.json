@@ -1,10 +1,12 @@
 {
-  "name": "react_server",
+  "name": "reaxt",
   "version": "0.0.3",
   "description": "A react templating server for erlang/elixir",
   "dependencies": {
     "webpack": "^1.4.13",
     "node_erlastic": "0.0.4",
+    "style-loader": "0.8.2",
+    "loader-utils": "^0.2.5",
     "react": "^0.12.2"
   }
 }
