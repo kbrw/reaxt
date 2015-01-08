@@ -46,12 +46,17 @@ Then render your server side HTML :
 ```elixir
 # if web/components/thefile exports the react component
 Reaxt.render!(:thefile,%{it: "is", the: "props"})
+
 # if web/components/thefile exports an object containing a react component
 # at the key "component_key"
+
 Reaxt.render!({:thefile,:component_key},%{it: "is", the: "props"})
+
 # if you want to use javascript to dynamically find your component and initial props
 # then thefile should exports a function(arg,callback) 
 # which then call callback(handler,props)
+# WARNING : your dynamically loaded component must have a displayName of
+#           "componentFileName.componentProperty" or "componentFileName"
 Reaxt.render!(:thefile,args,dyn_handler: true)
 ```
 

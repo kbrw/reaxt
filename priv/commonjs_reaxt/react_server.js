@@ -12,10 +12,9 @@ function safe_json_props(props){
 
 function build_js_render(handler,props,module,submodule){
   if(module === undefined){
-    if(handler.filename === undefined){
-      throw new Error("cannot use dyn_handler with component in a module property, it must be an entire module")
-    }
-    module = handler.filename.split('components/')[1]
+    modules = handler.displayName.split(".")
+    if(modules.length == 2){ module = modules[0] ; submodule = modules[1] }
+    else{ module = modules[0] }
   }
   module = '"'+module+'"'
   submodule = (submodule) ? ('"'+submodule+'"') : 'null'
@@ -23,7 +22,8 @@ function build_js_render(handler,props,module,submodule){
 }
 
 var normal_write = process.stdout.write
-function reaxt_render(handler,props,module,submodule){
+function rendering(handler,props,module,submodule){
+  var js_render = build_js_render(handler,props,module,submodule)
   try{
     var html
     process.stdout.write = function(){}
@@ -34,7 +34,7 @@ function reaxt_render(handler,props,module,submodule){
     return Bert.tuple(Bert.atom("ok"),{
       html: html,
       css: css,
-      js_render: build_js_render(handler,props,module,submodule)
+      js_render: js_render
     })
   }catch(error){
     process.stdout.write = normal_write
@@ -44,7 +44,7 @@ function reaxt_render(handler,props,module,submodule){
                  Bert.atom("render_error"),
                  error.toString(),
                  (error.stack && error.stack || Bert.atom("nil")),
-                 build_js_render(handler,props,module,submodule) ))
+                 js_render ))
   }
 }
 
@@ -63,10 +63,10 @@ Server(function(term,from,state,done){
     submodule = (submodule == "nil") ? undefined : submodule
     handler = (!submodule) ? handler : handler[submodule]
     if (type == "render_tpl")
-      done("reply", reaxt_render(handler,args,module,submodule))
+      done("reply", rendering(handler,args,module,submodule))
     else if (type == "render_dyn_tpl")
       handler(args,function(dynhandler,props){
-        done("reply",reaxt_render(dynhandler,props)) })
+        done("reply",rendering(dynhandler,props)) })
     else throw new Error("unexpected request")
   }catch(error){
     done("reply", 
