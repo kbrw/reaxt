@@ -32,7 +32,7 @@ defmodule Reaxt.Mixfile do
   defp package do
     [ contributors: ["Arnaud Wetzel"],
       licenses: ["The MIT License (MIT)"],
-      links: [ { "GitHub", "https://github.com/awetzel/reaxt" } ] ]
+      links: %{ "GitHub"=>"https://github.com/awetzel/reaxt"} ]
   end
 
   defp description do
