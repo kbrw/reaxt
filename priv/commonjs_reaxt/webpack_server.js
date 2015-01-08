@@ -7,19 +7,8 @@ if(process.argv[2] === "hot"){
     // add hotmodule plugin to client
     client_config.plugins = (client_config.plugins || []).concat([new webpack.HotModuleReplacementPlugin()])
     // add reloading code to entries
-    function add_hot_client(obj){
-      if(typeof(obj.entry) === 'string'){
-        obj.entry = [obj.entry,"webpack/hot/dev-server"]
-      }else if(obj.entry.length === undefined){
-        for(k in obj.entry){
-          var tmp = {entry: obj.entry[k]} ; add_hot_client(tmp)
-          obj.entry[k] = tmp.entry
-        }
-      }else {
-        obj.entry = ["webpack/hot/dev-server"].concat(obj.entry)
-      }
-    }
-    add_hot_client(client_config)
+    client_config.add_to_entries(client_config,"webpack/hot/dev-server")
+    // remove external which cause conflicts in hot loading
     client_config.externals = {}
 }
 var client_compiler = webpack(client_config)
