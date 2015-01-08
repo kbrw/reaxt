@@ -14,7 +14,6 @@ if(process.argv[2] === "hot"){
 var client_compiler = webpack(client_config)
 
 var to_compile = 2
-var last_hash = ""
 var client_stats,client_err
 function maybe_done() {
     to_compile--
@@ -37,9 +36,8 @@ client_compiler.plugin("failed", function(error) {
   maybe_done()
 })
 client_compiler.plugin("done", function(stats) {
-  last_hash = stats.hash
   client_stats = stats
-  port.write({event: "hash",hash: last_hash})
+  port.write({event: "hash",hash: stats.hash})
   require("fs").writeFile(process.cwd()+"/../priv/webpack.stats.json", JSON.stringify(stats.toJson()), maybe_done)
 })
 port.write({event: "invalid"})

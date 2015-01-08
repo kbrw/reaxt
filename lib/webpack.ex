@@ -8,19 +8,26 @@ defmodule WebPack.Plug.Static do
   """
   use Plug.Router
   plug :match
-  plug :dispatch
   plug Plug.Static, at: "/webpack/static", from: :reaxt
+  plug :dispatch
+  plug :wait_compilation
 
   def init(static_opts), do: Plug.Static.init(static_opts)
-  def call(conn,static_opts) do
-    conn = plug_builder_call(conn,static_opts) #manage webpack dev specific assets in this builder
-    if conn.halted do conn else
-      if Application.get_env(:reaxt,:hot) && 
-           :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
-        receive do :ok->:ok after 30_000->:ok end # if a compil is running, wait its end before serving asset
-      end
-      Plug.Static.call(conn,static_opts) # finally serve static files as with Plug.Static
+  def call(conn, opts) do
+    conn = plug_builder_call(conn, opts)
+    if !conn.halted, do: static_plug(conn,opts), else: conn
+  end
+
+  def wait_compilation(conn,_) do
+    if Application.get_env(:reaxt,:hot) && 
+         :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
+      receive do :ok->:ok after 30_000->:ok end # if a compil is running, wait its end before serving asset
     end
+    conn
+  end
+
+  def static_plug(conn,static_opts) do
+    Plug.Static.call(conn,static_opts)
   end
 
   get "/webpack/stats.json" do
@@ -73,7 +80,7 @@ defmodule WebPack.EventManager do
     {:ok,:wait,%{state|pending: [reply_to|state.pending]}}
 
   def handle_event(%{event: "done"}=ev,state) do
-    spawn fn-> WebPack.Util.build_stats end
+    WebPack.Util.build_stats
     case {ev,state.init} do
       {%{error: "soft fail"},true}->
         Logger.error("Compilation Error: see /webpack#errors")
@@ -89,9 +96,9 @@ defmodule WebPack.EventManager do
         Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
     for pid<-state.pending, do: send(pid,:ok)
-    {:ok,%{state| compiling: false, pending: [], init: false}}
+    {:ok,%{state| pending: [], init: false, compiling: false}}
   end
-  def handle_event(%{event: "invalid"},state) do
+  def handle_event(%{event: "invalid"},%{compiling: false}=state) do
     spawn fn-> #async compile server on invalid file
       Mix.Tasks.Webpack.Compile.compile_server
       GenServer.cast(WebPack.Compiler,:server_build)
@@ -118,6 +125,7 @@ defmodule WebPack.Util do
   def build_stats do
     if File.exists?("#{web_priv}/webpack.stats.json") do
       stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"), keys: :atoms)
+      stats = %{assetsByChunkName: stats.assetsByChunkName}
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats

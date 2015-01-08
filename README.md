@@ -40,7 +40,6 @@ Create the good directory and file layout:
 In your elixir code generating HTML :
 - add `WebPack.header` in the `<head>`
 - add a script with src `/your/public/path/<%= WebPack.file_of(:entry_name) %>` 
-- `WebPack.stats` contains all the webpack compiler informations if needed
 
 Then render your server side HTML :
 
