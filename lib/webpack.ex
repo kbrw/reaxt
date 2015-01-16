@@ -8,8 +8,8 @@ defmodule WebPack.Plug.Static do
   """
   use Plug.Router
   plug :match
-  plug Plug.Static, at: "/webpack/static", from: :reaxt
   plug :dispatch
+  plug Plug.Static, at: "/webpack/static", from: :reaxt
   plug :wait_compilation
 
   def init(static_opts), do: Plug.Static.init(static_opts)
