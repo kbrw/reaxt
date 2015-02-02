@@ -51,13 +51,6 @@ Reaxt.render!(:thefile,%{it: "is", the: "props"})
 # at the key "component_key"
 
 Reaxt.render!({:thefile,:component_key},%{it: "is", the: "props"})
-
-# if you want to use javascript to dynamically find your component and initial props
-# then thefile should exports a function(arg,callback) 
-# which then call callback(handler,props)
-# WARNING : your dynamically loaded component must have a displayName of
-#           "componentFileName.componentProperty" or "componentFileName"
-Reaxt.render!(:thefile,args,dyn_handler: true)
 ```
 
 The function return a `%{html: html,css: css,js_render: js_render}`, you have to add in the html :
@@ -121,6 +114,63 @@ Then configure in your application configuration :
   - use the webpack loader `react-hot-loader` to load your
     component to enable automatic browser hot reloading of your components
   - the `reaxt/style` loader for your css enable hot reloading of your css
+
+## Dynamic Handler and customize rendering (useful with react-router)
+
+Reaxt provides facilities to easily customize the rendering process at the
+server and the client side : this is done by attaching `reaxt_server_render`
+and/or `reaxt_client_render` to the module or object referenced by the first
+argument of `Reaxt.render!(`.
+
+- `reaxt_server_render(arg,callback)` will take `arg` from the second
+  argument of `Reaxt.render`, and have to execute
+  `callback(handler,props,param)` when the wanting handler and props
+  are determined. `param` is any stringifyable object.
+- `reaxt_client_render(props,elemid,param)` have to render the
+  good selected component on the client side.
+
+To understand how they work, let's look at the default implementation
+of these functions (what happened when they are not implemented).
+
+```javascript
+// default server rendering only take the exported module as the
+// handler to render and the argument as the props
+default_reaxt_server_render = function(arg,callback){
+  callback(this,arg)
+}
+// default client rendering only take the exported module as the
+// handler to render, the param as the rendering context
+default_reaxt_client_render = function(props,elemid,param){
+  React.withContext(param, function() {
+    React.render(React.createElement(this,props),document.getElementById(elemid))
+  })
+}
+```
+
+Now let's see an example usage of these functions : react-router
+integration (`Reaxt.render` second argument is the Path):
+
+```elixir
+Reaxt.render!(:router_handler,full_path(conn))
+```
+
+```javascript
+var App = require("./app")
+var Router = require("react-router")
+var Routes = require("./routes")
+module.exports = {
+  reaxt_server_render: function(path,callback){
+    Router.run(Routes, path,function (Handler, state) {
+      callback(Handler,{})
+    })
+  },
+  reaxt_client_render: function(props,elemid){
+    Router.run(Routes,Router.HistoryLocation,function(Handler,state){
+      React.render(React.createElement(Handler,props),document.getElementById(elemid))
+    })
+  }
+}
+```
 
 ## Error management
 

@@ -4,27 +4,16 @@ var React = require('react'),
     styleCollector = require("./style-collector")
 Bert.all_binaries_as_string = true
 
-function safe_json_props(props){
+function safe_stringify(props){
   return JSON.stringify(props)
          .replace(/<\/script/g, '<\\/script')
          .replace(/<!--/g, '<\\!--')
 }
 
-function build_js_render(handler,props,module,submodule,render_fun){
-  if(module === undefined){
-    modules = handler.displayName.split(".")
-    if(modules.length == 2){ module = modules[0] ; submodule = modules[1] }
-    else{ module = modules[0] }
-  }
-  module = '"'+module+'"'
-  submodule = (submodule) ? ('"'+submodule+'"') : 'null'
-  render_fun = (render_fun) ? '('+render_fun+')' : 'null'
-  return "(window.reaxt_render("+module+","+submodule+","+safe_json_props(props)+","+render_fun+"))"
-}
-
 var normal_write = process.stdout.write
-function rendering(handler,props,render_fun,module,submodule){
-  var js_render = build_js_render(handler,props,module,submodule,render_fun)
+function rendering(handler,props,module,submodule,param){
+  var render_params = safe_stringify([module,submodule,props,param])
+  var js_render = "(window.reaxt_render.apply(window,"+render_params+"))"
   try{
     var html
     process.stdout.write = function(){}
@@ -50,7 +39,7 @@ function rendering(handler,props,render_fun,module,submodule){
 }
 
 // protocol :
-// call {:render_tpl | :render_dyn_tpl, module, submodule | nil, render_fun | nil,arg}
+// call {:render, module, submodule | nil, arg}
 // - if :render_tpl, take handler from require("components/{module}") or require("template/{module}")[submodule]
 //   then reply {:ok,%{html: ReactRenderingOf(handler,arg),js_render: renderingjs,css: css}}
 // - if :render_dyn_tpl, take a handler selector function from require("template/{module}") or require("template/{module}")[submodule]
@@ -59,17 +48,16 @@ function rendering(handler,props,render_fun,module,submodule){
 // if error reply {:error, {:render_error,error,stack,renderingjs} | {:handler_error,error,stack}}
 Server(function(term,from,state,done){
   try{
-    var type=term[0], module=term[1], submodule=term[2], render_fun=term[3], args=term[4],
-        handler = require("./../../components/"+module),
+    var type=term[0], module=term[1].toString(), submodule=term[2].toString(), args=term[3],
+        handler = require("./../../components/"+module)
     submodule = (submodule == "nil") ? undefined : submodule
-    render_fun = (render_fun == "nil") ? undefined : render_fun
     handler = (!submodule) ? handler : handler[submodule]
-    if (type == "render_tpl")
-      done("reply", rendering(handler,args,render_fun,module,submodule))
-    else if (type == "render_dyn_tpl")
-      handler(args,function(dynhandler,props){
-        done("reply",rendering(dynhandler,props,render_fun)) })
-    else throw new Error("unexpected request")
+    if (handler.reaxt_server_render) {
+      handler.reaxt_server_render(args,function(dynhandler,props,param){
+        done("reply",rendering(dynhandler,props,module,submodule,param)) })
+    }else{
+      done("reply", rendering(handler,args,module,submodule))
+    }
   }catch(error){
     done("reply",
      Bert.tuple(

@@ -22,19 +22,16 @@ defmodule Reaxt do
   alias :poolboy, as: Pool
   require Logger
 
-  def render_result(module,data), do:
-    render_result(module,data, dyn_handler: false)
-  def render_result(module,data,opts) when not is_tuple(module), do:
-    render_result({module,nil},data,opts)
-  def render_result({module,submodule},data,opts) do
-    req = if opts[:dyn_handler], do: :render_dyn_tpl, else: :render_tpl
+  def render_result(module,data) when not is_tuple(module), do:
+    render_result({module,nil},data)
+  def render_result({module,submodule},data) do
     Pool.transaction(:react_pool,fn worker->
-      GenServer.call(worker,{req,module,submodule,opts[:render_fun],data})
+      GenServer.call(worker,{:render,module,submodule,data})
     end)
   end
 
-  def render!(module,data,opts \\ [dyn_handler: false]) do
-    case render_result(module,data,opts) do
+  def render!(module,data) do
+    case render_result(module,data) do
       {:ok,res}->res
       {:error,err}->
         try do raise(ReaxtError,err)
@@ -45,9 +42,9 @@ defmodule Reaxt do
     end
   end
 
-  def render(module,data,opts \\ [dyn_handler: false]) do
+  def render(module,data) do
     try do
-      render!(module,data,opts)
+      render!(module,data)
     rescue
       ex->
         case ex do

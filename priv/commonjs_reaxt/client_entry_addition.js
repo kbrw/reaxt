@@ -1,17 +1,15 @@
 var React = require("react")
 
-window.reaxt_render = function(module,submodule,props,render_fun){
-  try{
-    module = require("./../../components/"+module)
-    submodule = (submodule) ? module[submodule] :module
-  }catch(e){
-    submodule = null
-  }
+window.reaxt_render = function(module,submodule,props,param){
+  module = require("./../../components/"+module)
+  submodule = (submodule) ? module[submodule] :module
   return function(elemid){
-    if(render_fun){
-      render_fun(props,submodule,elemid)
+    if(submodule.reaxt_client_render){
+      submodule.reaxt_client_render(props,elemid,param)
     }else{
-      React.render(React.createElement(submodule,props),document.getElementById(elemid))
+      React.withContext(param, function() {
+        React.render(React.createElement(submodule,props),document.getElementById(elemid))
+      })
     }
   }
 }
