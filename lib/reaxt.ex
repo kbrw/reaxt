@@ -29,7 +29,7 @@ defmodule Reaxt do
   def render_result({module,submodule},data,opts) do
     req = if opts[:dyn_handler], do: :render_dyn_tpl, else: :render_tpl
     Pool.transaction(:react_pool,fn worker->
-      GenServer.call(worker,{req,module,submodule,data})
+      GenServer.call(worker,{req,module,submodule,opts[:render_fun],data})
     end)
   end
 
@@ -44,17 +44,17 @@ defmodule Reaxt do
         end
     end
   end
-  
+
   def render(module,data,opts \\ [dyn_handler: false]) do
-    try do 
-      render!(module,data,opts) 
+    try do
+      render!(module,data,opts)
     rescue
       ex->
         case ex do
           %{js_render: js_render} when is_binary(js_render)->
             Logger.error(Exception.message(ex))
             %{css: "",html: "", js_render: js_render}
-          _ -> 
+          _ ->
             reraise ex, System.stacktrace
         end
     end
@@ -75,7 +75,7 @@ defmodule Reaxt do
       def init([]) do
         pool_size = Application.get_env(:reaxt,:pool_size)
         pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
-        dev_workers = if Application.get_env(:reaxt,:hot), 
+        dev_workers = if Application.get_env(:reaxt,:hot),
            do: [worker(WebPack.Compiler,[]),worker(WebPack.EventManager,[])], else: []
         supervise(dev_workers ++ [
           Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,:react_pool}], [])
