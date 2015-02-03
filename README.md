@@ -117,6 +117,8 @@ Then configure in your application configuration :
 
 ## Dynamic Handler and customize rendering (useful with react-router)
 
+See a full example in [react-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
+
 Reaxt provides facilities to easily customize the rendering process at the
 server and the client side : this is done by attaching `reaxt_server_render`
 and/or `reaxt_client_render` to the module or object referenced by the first
@@ -141,14 +143,13 @@ default_reaxt_server_render = function(arg,callback){
 // default client rendering only take the exported module as the
 // handler to render, the param as the rendering context
 default_reaxt_client_render = function(props,elemid,param){
-  React.withContext(param, function() {
-    React.render(React.createElement(this,props),document.getElementById(elemid))
-  })
+  React.render(React.createElement(this,props),document.getElementById(elemid))
 }
 ```
 
 Now let's see an example usage of these functions : react-router
 integration (`Reaxt.render` second argument is the Path):
+See a full example in [react-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
 
 ```elixir
 Reaxt.render!(:router_handler,full_path(conn))

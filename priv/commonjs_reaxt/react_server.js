@@ -10,24 +10,20 @@ function safe_stringify(props){
          .replace(/<!--/g, '<\\!--')
 }
 
-var normal_write = process.stdout.write
 function rendering(handler,props,module,submodule,param){
   var render_params = safe_stringify([module,submodule,props,param])
   var js_render = "(window.reaxt_render.apply(window,"+render_params+"))"
   try{
     var html
-    process.stdout.write = function(){}
     var css = styleCollector.collect(function() {
       html = React.renderToString(React.createElement(handler,props))
     })
-    process.stdout.write = normal_write
     return Bert.tuple(Bert.atom("ok"),{
       html: html,
       css: css,
       js_render: js_render
     })
   }catch(error){
-    process.stdout.write = normal_write
     return Bert.tuple(
              Bert.atom("error"),
                Bert.tuple(
@@ -38,13 +34,14 @@ function rendering(handler,props,module,submodule,param){
   }
 }
 
+function default_server_render(arg,callback){
+  callback(this,arg)
+}
+
 // protocol :
 // call {:render, module, submodule | nil, arg}
 // - if :render_tpl, take handler from require("components/{module}") or require("template/{module}")[submodule]
 //   then reply {:ok,%{html: ReactRenderingOf(handler,arg),js_render: renderingjs,css: css}}
-// - if :render_dyn_tpl, take a handler selector function from require("template/{module}") or require("template/{module}")[submodule]
-//   this function must take 2 arguments : arg, callback, must find an appropriate handler and call
-//   callback(handler,prop) to reply the same as :render_tpl
 // if error reply {:error, {:render_error,error,stack,renderingjs} | {:handler_error,error,stack}}
 Server(function(term,from,state,done){
   try{
@@ -52,12 +49,10 @@ Server(function(term,from,state,done){
         handler = require("./../../components/"+module)
     submodule = (submodule == "nil") ? undefined : submodule
     handler = (!submodule) ? handler : handler[submodule]
-    if (handler.reaxt_server_render) {
-      handler.reaxt_server_render(args,function(dynhandler,props,param){
-        done("reply",rendering(dynhandler,props,module,submodule,param)) })
-    }else{
-      done("reply", rendering(handler,args,module,submodule))
-    }
+    handler.reaxt_server_render = handler.reaxt_server_render || default_server_render
+    handler.reaxt_server_render(args,function(dynhandler,props,param){
+      done("reply",rendering(dynhandler,props,module,submodule,param)) 
+    })
   }catch(error){
     done("reply",
      Bert.tuple(
