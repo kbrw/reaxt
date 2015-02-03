@@ -117,7 +117,7 @@ Then configure in your application configuration :
 
 ## Dynamic Handler and customize rendering (useful with react-router)
 
-See a full example in [react-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
+See a full example in [reaxt-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
 
 Reaxt provides facilities to easily customize the rendering process at the
 server and the client side : this is done by attaching `reaxt_server_render`
@@ -129,7 +129,10 @@ argument of `Reaxt.render!(`.
   `callback(handler,props,param)` when the wanting handler and props
   are determined. `param` is any stringifyable object.
 - `reaxt_client_render(props,elemid,param)` have to render the
-  good selected component on the client side.
+  good selected component on the client side. 
+  - `props` is the initial props used in server rendering,
+  - `elemid` is the element id choosen as parameter of `renderobj.js_render` on server
+  - `param` is the deserialized version of the third parameter of the callback in `reaxt_server_render`
 
 To understand how they work, let's look at the default implementation
 of these functions (what happened when they are not implemented).
@@ -138,10 +141,10 @@ of these functions (what happened when they are not implemented).
 // default server rendering only take the exported module as the
 // handler to render and the argument as the props
 default_reaxt_server_render = function(arg,callback){
-  callback(this,arg)
+  callback(this,arg,null)
 }
 // default client rendering only take the exported module as the
-// handler to render, the param as the rendering context
+// handler to render, the param is ignored
 default_reaxt_client_render = function(props,elemid,param){
   React.render(React.createElement(this,props),document.getElementById(elemid))
 }
@@ -149,7 +152,7 @@ default_reaxt_client_render = function(props,elemid,param){
 
 Now let's see an example usage of these functions : react-router
 integration (`Reaxt.render` second argument is the Path):
-See a full example in [react-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
+See a full example in [reaxt-example](https://github.com/awetzel/reaxt-example/blob/master/web/components/my_router.js)
 
 ```elixir
 Reaxt.render!(:router_handler,full_path(conn))
