@@ -124,14 +124,14 @@ server and the client side : this is done by attaching `reaxt_server_render`
 and/or `reaxt_client_render` to the module or object referenced by the first
 argument of `Reaxt.render!(`.
 
-- `reaxt_server_render(arg,callback)` will take `arg` from the second
-  argument of `Reaxt.render`, and have to execute
-  `callback(handler,props,param)` when the wanting handler and props
-  are determined. `param` is any stringifyable object.
-- `reaxt_client_render(props,elemid,param)` have to render the
+- `reaxt_server_render(arg,render)` will 
+  - take `arg` from the second argument of `Reaxt.render`, 
+  - have to execute `render(component,param)` when the wanting handler and props
+    are determined. `param` is any stringifyable object passed to client rendering
+- `reaxt_client_render(props,render,param)` have to render the
   good selected component on the client side. 
   - `props` is the initial props used in server rendering,
-  - `elemid` is the element id choosen as parameter of `renderobj.js_render` on server
+  - `render` is function you have to call to make the client react rendering
   - `param` is the deserialized version of the third parameter of the callback in `reaxt_server_render`
 
 To understand how they work, let's look at the default implementation
@@ -140,13 +140,13 @@ of these functions (what happened when they are not implemented).
 ```javascript
 // default server rendering only take the exported module as the
 // handler to render and the argument as the props
-default_reaxt_server_render = function(arg,callback){
-  callback(this,arg,null)
+default_reaxt_server_render = function(arg,render){
+  render(<this {...arg}/>,null)
 }
 // default client rendering only take the exported module as the
 // handler to render, the param is ignored
-default_reaxt_client_render = function(props,elemid,param){
-  React.render(React.createElement(this,props),document.getElementById(elemid))
+default_reaxt_client_render = function(props,render,param){
+  render(<this {...props}/>)
 }
 ```
 
@@ -163,14 +163,14 @@ var App = require("./app")
 var Router = require("react-router")
 var Routes = require("./routes")
 module.exports = {
-  reaxt_server_render: function(path,callback){
+  reaxt_server_render: function(path,render){
     Router.run(Routes, path,function (Handler, state) {
-      callback(Handler,{})
+      render(<Handler/>)
     })
   },
-  reaxt_client_render: function(props,elemid){
+  reaxt_client_render: function(props,render){
     Router.run(Routes,Router.HistoryLocation,function(Handler,state){
-      React.render(React.createElement(Handler,props),document.getElementById(elemid))
+      render(<Handler {...props}/>)
     })
   }
 }

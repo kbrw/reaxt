@@ -10,13 +10,13 @@ function safe_stringify(props){
          .replace(/<!--/g, '<\\!--')
 }
 
-function rendering(handler,props,module,submodule,param){
-  var render_params = safe_stringify([module,submodule,props,param])
+function rendering(component,module,submodule,param){
+  var render_params = safe_stringify([module,submodule,component.props,param])
   var js_render = "(window.reaxt_render.apply(window,"+render_params+"))"
   try{
     var html
     var css = styleCollector.collect(function() {
-      html = React.renderToString(React.createElement(handler,props))
+      html = React.renderToString(component)
     })
     return Bert.tuple(Bert.atom("ok"),{
       html: html,
@@ -34,8 +34,8 @@ function rendering(handler,props,module,submodule,param){
   }
 }
 
-function default_server_render(arg,callback){
-  callback(this,arg)
+function default_server_render(arg,render){
+  render(React.createElement(this,arg))
 }
 
 // protocol :
@@ -50,8 +50,8 @@ Server(function(term,from,state,done){
     submodule = (submodule == "nil") ? undefined : submodule
     handler = (!submodule) ? handler : handler[submodule]
     handler.reaxt_server_render = handler.reaxt_server_render || default_server_render
-    handler.reaxt_server_render(args,function(dynhandler,props,param){
-      done("reply",rendering(dynhandler,props,module,submodule,param)) 
+    handler.reaxt_server_render(args,function(component,param){
+      done("reply",rendering(component,module,submodule,param))
     })
   }catch(error){
     done("reply",
