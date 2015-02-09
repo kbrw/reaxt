@@ -5,7 +5,7 @@ function add_to_entries(obj,newEntry){
     obj.entry = [newEntry,obj.entry]
   }else if(obj.entry.length === undefined){
     for(k in obj.entry){
-      var tmp = {entry: obj.entry[k]} ; add_hot_client(tmp)
+      var tmp = {entry: obj.entry[k]} ; add_to_entries(tmp,newEntry)
       obj.entry[k] = tmp.entry
     }
   }else {
