@@ -23,7 +23,7 @@ application, but lets look into details and requirements.
 
 In your mix.exs, add the dependency and the custom compiler for webpack: 
 - Add the `:reaxt` dependency to your project.deps and application.applications
-- Add `compilers: [:reaxt_webpack] ++ Mix.compilers` to your project
+- Add `compilers: [:reaxt_webpack] ++ Mix.compilers` to your project, (`:reaxtWebpack` for elixir < v1.0.3)
 
 In your config/config.exs, link the reaxt application to the
 application containing the JS web app

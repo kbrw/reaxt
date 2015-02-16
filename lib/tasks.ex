@@ -36,7 +36,7 @@ defmodule Mix.Tasks.Webpack.Compile do
   end
 end
 
-defmodule Mix.Tasks.Compile.Reaxt_webpack do
+defmodule Mix.Tasks.Compile.ReaxtWebpack do
   def run(args) do
     if !File.exists?("web/node_modules") do
       Mix.Task.run("npm.install", args)
