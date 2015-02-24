@@ -183,6 +183,38 @@ Elixir one with a fake stacktrace pointing to the generated javascript file.
 
 This is really nice because you can see javascript stacktrace in the `Plug.Debugger` UI on exception.
 
+## Global Configuration
+
+You can define a term in Elixir using Application `env`
+`global_config` which will be available globally in the server and
+the client side with `require('reaxt/config')`.
+
+```elixir
+config :reaxt,:global_config, %{
+  some_config1: "value1",
+  some_config2: "value2"
+}
+```
+
+This configuration is static once the `:reaxt` application has started. So if
+you want to change this configuration at runtime, you need to reload all
+`:reaxt` renderer with `Reaxt.reload`. Remember : this is a costly reload, do
+not use it to maintain a state at real time but only for configuration purpose.
+
+```elixir
+Application.put_env :reaxt, :global_config, %{
+  some_config1: "value3",
+  some_config2: "value4"
+}
+Reaxt.reload
+```
+
+Then in your javascript component, you can use this config using : 
+
+```javascript
+require('reaxt/config').some_config1
+```
+
 ## Perfs and pool management
 
 The NodeJS renderers are managed in a pool (to obtain "multicore" JS rendering), so :

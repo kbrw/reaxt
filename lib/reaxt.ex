@@ -57,15 +57,23 @@ defmodule Reaxt do
     end
   end
 
+  def reload do
+    WebPack.Util.build_stats
+    Supervisor.terminate_child(Reaxt.App.Sup,:react)
+    Supervisor.restart_child(Reaxt.App.Sup,:react)
+  end
+
   def start_link([]) do
-    Exos.Proc.start_link("node server",nil,[cd: '#{WebPack.Util.web_priv}'])
+    init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
+    Exos.Proc.start_link("node server",init,[cd: '#{WebPack.Util.web_priv}'])
   end
 
   defmodule App do
     use Application
     def start(_,_) do
+      result = Supervisor.start_link(App.Sup,[], name: App.Sup)
       WebPack.Util.build_stats
-      Supervisor.start_link(App.Sup,[], name: App.Sup)
+      result
     end
     defmodule Sup do
       use Supervisor
@@ -74,9 +82,9 @@ defmodule Reaxt do
         pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
         dev_workers = if Application.get_env(:reaxt,:hot),
            do: [worker(WebPack.Compiler,[]),worker(WebPack.EventManager,[])], else: []
-        supervise(dev_workers ++ [
+        supervise([
           Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,:react_pool}], [])
-        ], strategy: :one_for_one)
+        ]++dev_workers, strategy: :one_for_one)
       end
     end
   end

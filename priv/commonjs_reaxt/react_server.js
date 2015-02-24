@@ -45,7 +45,7 @@ function default_server_render(arg,render){
 // if error reply {:error, {:render_error,error,stack,renderingjs} | {:handler_error,error,stack}}
 Server(function(term,from,state,done){
   try{
-    var type=term[0], module=term[1].toString(), submodule=term[2].toString(), args=term[3],
+    var module=term[1].toString(), submodule=term[2].toString(), args=term[3],
         handler = require("./../../components/"+module)
     submodule = (submodule == "nil") ? undefined : submodule
     handler = (!submodule) ? handler : handler[submodule]
@@ -62,4 +62,7 @@ Server(function(term,from,state,done){
            error.toString(),
            (error.stack && error.stack || Bert.atom("nil")))))
   }
+},function(init){
+  global.global_reaxt_config = JSON.parse(init)
+  return null
 })
