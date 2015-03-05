@@ -16,6 +16,16 @@ Use your [React](http://facebook.github.io/react/) components into your elixir a
   - You do not have to think about the server side Javascript configuration, 
     just write a webpack conf for the browser, and it is ready to use.
 
+TODO List :
+
+- [ ] Handle Source map in server side for combined stacktrace generation
+- [ ] Add Source map in client side 
+- [ ] Currently the compiler compile in parallel server entry and client
+      entries, but server side compilation does not handle *cacheable* and slow
+      down very much the compilation
+- [ ] handle css loader for `reaxt/style` loader, currently it is ignored in
+      server side, which is a problem for URL remapping in CSS.
+
 ## Usage ##
 
 See https://github.com/awetzel/reaxt-example for a ready to use example
