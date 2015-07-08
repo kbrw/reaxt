@@ -53,11 +53,11 @@ Server(function(term,from,state,done){
   handler = (!submodule) ? handler : handler[submodule]
   handler.reaxt_server_render = handler.reaxt_server_render || default_server_render
   current_ref++
-  (ref=>{
+  (function(ref){
     var d = Domain.create()
-    var timeout = setTimeout(()=> 
+    var timeout = setTimeout(function(){
       done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(Bert.atom("handler_error"),"timeout",Bert.atom("nil"))))
-    ,1000)
+    },1000)
     d.on('error',function(error){
       clearTimeout(timeout)
       if(ref === current_ref)
