@@ -22,16 +22,16 @@ defmodule Reaxt do
   alias :poolboy, as: Pool
   require Logger
 
-  def render_result(module,data) when not is_tuple(module), do:
-    render_result({module,nil},data)
-  def render_result({module,submodule},data) do
+  def render_result(module,data,timeout) when not is_tuple(module), do:
+    render_result({module,nil},data,timeout)
+  def render_result({module,submodule},data,timeout) do
     Pool.transaction(:react_pool,fn worker->
-      GenServer.call(worker,{:render,module,submodule,data})
+      GenServer.call(worker,{:render,module,submodule,data,timeout},timeout+100)
     end)
   end
 
-  def render!(module,data) do
-    case render_result(module,data) do
+  def render!(module,data, timeout \\ 5_000) do
+    case render_result(module,data,timeout) do
       {:ok,res}->res
       {:error,err}->
         try do raise(ReaxtError,err)
@@ -42,9 +42,9 @@ defmodule Reaxt do
     end
   end
 
-  def render(module,data) do
+  def render(module,data, timeout \\ 5_000) do
     try do
-      render!(module,data)
+      render!(module,data,timeout)
     rescue
       ex->
         case ex do

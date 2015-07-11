@@ -47,7 +47,7 @@ function default_server_render(arg,render){
 // if error reply {:error, {:render_error,error,stack,renderingjs} | {:handler_error,error,stack}}
 var current_ref = 0
 Server(function(term,from,state,done){
-  var module=term[1].toString(), submodule=term[2].toString(), args=term[3],
+  var module=term[1].toString(), submodule=term[2].toString(), args=term[3], timeout=term[4],
       handler = require("./../../components/"+module)
   submodule = (submodule == "nil") ? undefined : submodule
   handler = (!submodule) ? handler : handler[submodule]
@@ -55,11 +55,11 @@ Server(function(term,from,state,done){
   current_ref++
   (function(ref){
     var d = Domain.create()
-    var timeout = setTimeout(function(){
+    var timeout_handler = setTimeout(function(){
       done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(Bert.atom("handler_error"),"timeout",Bert.atom("nil"))))
-    },1000)
+    },timeout)
     d.on('error',function(error){
-      clearTimeout(timeout)
+      clearTimeout(timeout_handler)
       if(ref === current_ref)
         done("reply",
          Bert.tuple(
@@ -71,7 +71,7 @@ Server(function(term,from,state,done){
     })
     d.run(function(){
       handler.reaxt_server_render(args,function(component,param){
-        clearTimeout(timeout)
+        clearTimeout(timeout_handler)
         if(ref === current_ref){
           done("reply",rendering(component,module,submodule,param))
         }
