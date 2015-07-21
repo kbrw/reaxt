@@ -1,10 +1,10 @@
 defmodule WebPack.Plug.Static do
   @moduledoc """
-  This plug API is the same as plug.static, 
-  but wrapped to : 
+  This plug API is the same as plug.static,
+  but wrapped to :
   - wait file if compiling before serving them
   - add server side event endpoint for webpack build events
-  - add webpack "stats" JSON getter, and stats static analyser app 
+  - add webpack "stats" JSON getter, and stats static analyser app
   """
   use Plug.Router
   plug :match
@@ -19,7 +19,7 @@ defmodule WebPack.Plug.Static do
   end
 
   def wait_compilation(conn,_) do
-    if Application.get_env(:reaxt,:hot) && 
+    if Application.get_env(:reaxt,:hot) &&
          :wait == GenEvent.call(WebPack.Events,WebPack.EventManager,{:wait?,self}) do
       receive do :ok->:ok after 30_000->:ok end # if a compil is running, wait its end before serving asset
     end
@@ -50,7 +50,7 @@ defmodule WebPack.Plug.Static do
   get "/webpack/client.js" do
     conn
     |> put_resp_content_type("application/javascript")
-    |> send_file(200,"web/node_modules/reaxt/webpack_client.js")
+    |> send_file(200,"#{WebPack.Util.web_app}/node_modules/reaxt/webpack_client.js")
     |> halt
   end
   match _, do: conn
@@ -71,7 +71,7 @@ defmodule WebPack.EventManager do
     res = GenEvent.start_link(name: WebPack.Events)
     GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false})
     receive do :server_ready-> :ok end
-    res 
+    res
   end
 
   def handle_call({:wait?,_reply_to},%{compiling: false}=state), do:
@@ -112,14 +112,20 @@ defmodule WebPack.Compiler do
   def start_link do
     cmd = "node ./node_modules/reaxt/webpack_server"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: 'web'],[name: __MODULE__],WebPack.Events)
+    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
   end
 end
 
 defmodule WebPack.Util do
   def web_priv do
-    web_app = Application.get_env :reaxt, :otp_app
-    "#{:code.priv_dir(web_app)}"
+    case Application.get_env :reaxt, :otp_app, :no_app_specified do
+      :no_app_specified -> :no_app_specified
+      web_app -> :code.priv_dir(web_app)
+    end
+  end
+
+  def web_app do
+    Application.get_env :reaxt, :web_app, "web"
   end
 
   def build_stats do
@@ -134,12 +140,12 @@ defmodule WebPack.Util do
             [f|_]->f
             f -> f
           end
-        end 
+        end
         @header_script if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
         @header_global Poison.encode!(Application.get_env(:reaxt,:global_config))
         def header, do:
           "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
       end
-    end 
+    end
   end
 end

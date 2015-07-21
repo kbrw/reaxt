@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.Npm.Install do
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
-    System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: "web")
-    System.cmd("npm",["install","#{:code.priv_dir(:reaxt)}/commonjs_reaxt"], into: IO.stream(:stdio, :line), cd: "web")
+    System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    System.cmd("npm",["install","#{:code.priv_dir(:reaxt)}/commonjs_reaxt"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
   end
 end
 
@@ -28,20 +28,81 @@ defmodule Mix.Tasks.Webpack.Compile do
   end
   def compile_server() do
     server_config = "./node_modules/reaxt/server.webpack.config.js"
-    System.cmd("node",[@webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: "web")
+    System.cmd("node",[@webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
   end
   def compile_client() do
     client_config = "./node_modules/reaxt/client.webpack.config.js"
-    System.cmd("node",[@webpack,"--config",client_config,"--json"], into: "", cd: "web")
+    System.cmd("node",[@webpack,"--config",client_config,"--json"], into: "", cd: WebPack.Util.web_app)
+  end
+end
+
+defmodule Mix.Tasks.Reaxt.Validate do
+  @shortdoc "Validates that reaxt is setup correct"
+  use Mix.Task
+
+  def run(args) do
+    if Enum.all?(args, &(&1 != "--reaxt-skip-validation")) do
+      validate(args)
+    end
+  end
+
+  def validate(args) do
+    if WebPack.Util.web_priv == :no_app_specified, do:
+      Mix.raise """
+                Reaxt :otp_app is not configured.
+                Add following to config.exs
+
+                  config :reaxt, :otp_app, :your_app
+
+                """
+
+    packageJsonPath = Path.join(WebPack.Util.web_app, "package.json")
+    if not File.exists?(packageJsonPath), do:
+      Mix.raise """
+                Reaxt could not find a package.json in #{WebPack.Util.web_app}.
+                Add package.json to #{WebPack.Util.web_app} or configure a new
+                web_app directory in config.exs:
+
+                  config :reaxt, :web_app, "webapp"
+
+                """
+
+    if Poison.decode!(File.read!(packageJsonPath))["dependencies"]["webpack"] == nil, do:
+      Mix.raise """
+                Reaxt requires webpack as a dependency in #{packageJsonPath}.
+                Add a dependency to 'webpack' like:
+
+                  {
+                    dependencies: {
+                      "webpack": "^1.4.13"
+                    }
+                  }
+                """
+
+    if (Enum.all?(args, &(&1 != "--reaxt-skip-compiler-check"))
+        and Enum.all? (Mix.Project.get!).project[:compilers], &(&1 != :reaxt_webpack)), do:
+      Mix.raise """
+                Reaxt has a built in compiler that compiles the web app.
+                Remember to add it to the list of compilers in mix.exs:
+
+                  def project do
+                    [...
+                      app: :your_app,
+                      compilers: [:reaxt_webpack] ++ Mix.compilers,
+                      ...]
+                  end
+                """
   end
 end
 
 defmodule Mix.Tasks.Compile.ReaxtWebpack do
   def run(args) do
-    if !File.exists?("web/node_modules") do
+    Mix.Task.run("reaxt.validate", args ++ ["--reaxt-skip-compiler-check"])
+
+    if !File.exists?(Path.join(WebPack.Util.web_app, "node_modules")) do
       Mix.Task.run("npm.install", args)
     else
-      installed_version = Poison.decode!(File.read!("web/node_modules/reaxt/package.json"))["version"]
+      installed_version = Poison.decode!(File.read!("#{WebPack.Util.web_app}/node_modules/reaxt/package.json"))["version"]
       current_version = Poison.decode!(File.read!("#{:code.priv_dir(:reaxt)}/commonjs_reaxt/package.json"))["version"]
       if  installed_version !== current_version, do:
         Mix.Task.run("npm.install", args)
