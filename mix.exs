@@ -3,7 +3,7 @@ defmodule Reaxt.Mixfile do
 
   def project do
     [app: :reaxt,
-     version: "0.3.0",
+     version: "0.3.1",
      description: description,
      package: package,
      elixir: "~> 1.0",
@@ -25,7 +25,7 @@ defmodule Reaxt.Mixfile do
     [{:exos, "1.0.0"},
      {:poolboy, []},
      {:cowboy,"~> 1.0.0"},
-     {:plug,"~> 0.13.0"},
+     {:plug,"~> 1.0"},
      {:poison,"~> 1.4.0"}]
   end
 
