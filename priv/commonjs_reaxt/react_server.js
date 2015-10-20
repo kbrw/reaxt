@@ -1,4 +1,5 @@
 var React = require('react'),
+    ReactDOMServer = require("react-dom/server"),
     Server = require('node_erlastic').server,
 	Bert = require('node_erlastic/bert'),
     styleCollector = require("./style-collector"),
@@ -17,7 +18,7 @@ function rendering(component,module,submodule,param){
   try{
     var html
     var css = styleCollector.collect(function() {
-      html = React.renderToString(component)
+      html = ReactDOMServer.renderToString(component)
     })
     return Bert.tuple(Bert.atom("ok"),{
       html: html,
