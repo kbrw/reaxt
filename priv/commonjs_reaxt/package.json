@@ -1,6 +1,6 @@
 {
   "name": "reaxt",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A react templating server for erlang/elixir",
   "dependencies": {
     "webpack": "^1.4.13",

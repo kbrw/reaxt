@@ -69,7 +69,7 @@ defmodule WebPack.EventManager do
   require Logger
   def start_link do
     res = GenEvent.start_link(name: WebPack.Events)
-    GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false})
+    GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false, compiled: %{server: false, client: false}})
     receive do :server_ready-> :ok end
     res
   end
@@ -79,39 +79,66 @@ defmodule WebPack.EventManager do
   def handle_call({:wait?,reply_to},state), do:
     {:ok,:wait,%{state|pending: [reply_to|state.pending]}}
 
-  def handle_event(%{event: "done"}=ev,state) do
-    WebPack.Util.build_stats
-    case {ev,state.init} do
-      {%{error: "soft fail"},true}->
-        Logger.error("Compilation Error: see /webpack#errors")
-        send(Process.whereis(Reaxt.App.Sup),:server_ready)
-      {%{error: error},true}->
-        Logger.error("cannot compile server_side renderer")
-        Logger.error(error)
+  def handle_event(%{event: "server_done"}=ev,state) do
+    if(!state.init) do
+      Logger.info("[reaxt-webpack] server done, restart servers")
+      :ok = Supervisor.terminate_child(Reaxt.App.Sup,:react)
+      {:ok,_} = Supervisor.restart_child(Reaxt.App.Sup,:react)
+    end
+    if ev[:error] do
+      Logger.error("[rext-webpack] error compiling server_side JS #{ev[:error]}")
+      if ev[:error] != "soft fail", do:
         System.halt(1)
-      {_,true}->
-        send(Process.whereis(Reaxt.App.Sup),:server_ready)
-      {_,false}->
-        Supervisor.terminate_child(Reaxt.App.Sup,:react)
-        Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
+    {:ok,try_done(:server,state)}
+  end
+
+  def handle_event(%{event: "client_done"}=ev,state) do
+    Logger.info("[reaxt-webpack] client done, build_stats")
+    WebPack.Util.build_stats
+    if ev[:error] do
+      Logger.error("[reaxt-webpack] error compiling client_side JS #{ev[:error]}")
+    end
+    for error<-WebPack.stats.errors, do: Logger.warn(error)
+    for warning<-WebPack.stats.warnings, do: Logger.warn(warning)
+    {:ok,try_done(:client,state)}
+  end
+  def handle_event(%{event: "client_invalid"},%{compiling: false}=state) do
+    Logger.info("[reaxt-webpack] detect client file change")
+    {:ok,%{state|compiling: true, compiled: %{client: false, server: false}}}
+  end
+  def handle_event(%{event: "done"},state) do
+    Logger.info("[reaxt-webpack] both done !")
+    {:ok,state}
+  end
+  def handle_event(ev,state) do
+    Logger.info("[reaxt-webpack] event : #{ev[:event]}")
+    {:ok,state}
+  end
+
+  def try_done(:server,%{compiled: %{client: true}}=state), do: done(state)
+  def try_done(:client,%{compiled: %{server: true}}=state), do: done(state)
+  def try_done(other,state), do: put_in(state,[:compiled,other],true)
+  def done(state) do
     for pid<-state.pending, do: send(pid,:ok)
-    {:ok,%{state| pending: [], init: false, compiling: false}}
+    if state.init, do: send(Process.whereis(Reaxt.App.Sup),:server_ready)
+    GenEvent.notify(WebPack.Events,%{event: "done"})
+    %{state| pending: [], init: false, compiling: false, compiled: %{client: true, server: true}}
   end
-  def handle_event(%{event: "invalid"},%{compiling: false}=state) do
-    spawn fn-> #async compile server on invalid file
-      Mix.Tasks.Webpack.Compile.compile_server
-      GenServer.cast(WebPack.Compiler,:server_build)
-    end
-    {:ok,%{state|compiling: true}}
-  end
-  def handle_event(_ev,state), do: {:ok,state}
 end
 
-defmodule WebPack.Compiler do
+defmodule WebPack.Compiler.Client do
   def start_link do
-    cmd = "node ./node_modules/reaxt/webpack_server"
+    cmd = "node ./node_modules/reaxt/webpack_server_client"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
+    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
+  end
+end
+
+defmodule WebPack.Compiler.Server do
+  def start_link do
+    cmd = "node ./node_modules/reaxt/webpack_server_server"
+    hot_arg = if Application.get_env(:reaxt,:hot), do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
   end
 end
@@ -130,13 +157,15 @@ defmodule WebPack.Util do
 
   def build_stats do
     if File.exists?("#{web_priv}/webpack.stats.json") do
-      stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"), keys: :atoms)
-      stats = %{assetsByChunkName: stats.assetsByChunkName}
+      stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"))
+      stats = %{assetsByChunkName: stats["assetsByChunkName"],
+                errors: stats["errors"],
+                warnings: stats["warnings"]}
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats
         def file_of(name) do
-          case WebPack.stats.assetsByChunkName[name] do
+          case WebPack.stats.assetsByChunkName["#{name}"] do
             [f|_]->f
             f -> f
           end

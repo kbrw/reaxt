@@ -81,7 +81,9 @@ defmodule Reaxt do
         pool_size = Application.get_env(:reaxt,:pool_size)
         pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
         dev_workers = if Application.get_env(:reaxt,:hot),
-           do: [worker(WebPack.Compiler,[]),worker(WebPack.EventManager,[])], else: []
+           do: [worker(WebPack.Compiler.Client,[]),
+                worker(WebPack.Compiler.Server,[]),
+                worker(WebPack.EventManager,[])], else: []
         supervise([
           Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,:react_pool}], [])
         ]++dev_workers, strategy: :one_for_one)
