@@ -3,7 +3,7 @@ defmodule Reaxt.Mixfile do
 
   def project do
     [app: :reaxt,
-     version: "0.3.3",
+     version: "1.0.0",
      description: description,
      package: package,
      elixir: ">= 1.0.0",
@@ -30,7 +30,7 @@ defmodule Reaxt.Mixfile do
   end
 
   defp package do
-    [ contributors: ["Arnaud Wetzel"],
+    [ maintainers: ["Arnaud Wetzel"],
       licenses: ["The MIT License (MIT)"],
       links: %{ "GitHub"=>"https://github.com/awetzel/reaxt"} ]
   end
