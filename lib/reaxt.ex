@@ -64,8 +64,13 @@ defmodule Reaxt do
   end
 
   def start_link([]) do
-    init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-    Exos.Proc.start_link("node server",init,[cd: '#{WebPack.Util.web_priv}'])
+    if not File.exists?("#{WebPack.Util.web_priv}/server.js") do
+      Logger.error("server.js not yet compiled, compile it before with `mix webpack.compile`")
+      {:error,:serverjs_not_compiled}
+    else
+      init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
+      Exos.Proc.start_link("node server",init,[cd: '#{WebPack.Util.web_priv}'])
+    end
   end
 
   defmodule App do
