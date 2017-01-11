@@ -179,7 +179,7 @@ defmodule WebPack.Util do
   end
 end
 
-defmodule Elixir.WebPack do
+defmodule WebPack do
   def stats, do: %{assetsByChunkName: %{}}
   def file_of(_), do: nil
   def header, do: ""

@@ -22,7 +22,7 @@ defmodule Reaxt.Mixfile do
   end
 
   defp deps do
-    [{:exos, "~> 1.0.0"},
+    [{:exos, "~> 1.0"},
      {:poolboy, "~> 1.5.0"},
      {:cowboy,"~> 1.0.0"},
      {:plug, "~> 1.0"},
