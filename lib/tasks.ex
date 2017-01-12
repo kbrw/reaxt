@@ -1,24 +1,59 @@
+defmodule Reaxt.Build.Utils do
+  def info(action, msg, color \\ :reset) do
+    msg = [
+      IO.ANSI.format_fragment([color], true),
+      String.pad_leading(String.upcase("#{action} "), 8),
+      IO.ANSI.format_fragment([:reset], true),
+      msg,
+    ] |> IO.iodata_to_binary
+    Mix.shell.info(msg)
+  end
+
+  def cmd(cmdname, args, {logname, logtarget}, opts \\ []) do
+    case System.cmd(cmdname, args, opts) do
+      {_, 0} ->
+	info(logname, "#{logtarget}", :green)
+	:ok
+      {out, _} ->
+	info(logname, "#{logtarget} (FAILED)", :red)
+	Mix.shell.error(out)
+	:error
+    end
+  end
+end
+
 defmodule Mix.Tasks.Npm.Install do
+  import Reaxt.Build.Utils
+  
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
-    System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
-    System.cmd("npm",["install","#{:code.priv_dir(:reaxt)}/commonjs_reaxt"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    :ok = cmd("npm",["install"], {:install, "#{WebPack.Util.web_app}"},
+      cd: WebPack.Util.web_app)
+    :ok = cmd("npm",["install", "#{:code.priv_dir(:reaxt)}/commonjs_reaxt"],
+      {:install, "#{:code.priv_dir(:reaxt)}/commonjs_reaxt"}, cd: WebPack.Util.web_app)
   end
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
+  import Reaxt.Build.Utils
+  
   @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
   def run(_args) do
     File.rm_rf!("priv/static")
-    {_,0} = System.cmd("git",["clone","-b","ajax-sse-loading","https://github.com/awetzel/analyse"], into: IO.stream(:stdio, :line))
-    {_,0} = System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: "analyse")
-    {_,0} = System.cmd("grunt",[], into: IO.stream(:stdio, :line), cd: "analyse")
+    :ok = cmd("git",["clone","-b","ajax-sse-loading","https://github.com/awetzel/analyse"],
+      {:git, "clone analyse"}, stderr_to_stdout: true)
+    :ok = cmd("npm",["install"],
+      {:install, "analyse"}, cd: "analyse")
+    :ok = cmd("grunt",[],
+      {:grunt, "analyse"}, cd: "analyse")
     File.cp_r!("analyse/dist", "priv/static")
     File.rm_rf!("analyse")
   end
 end
 
 defmodule Mix.Tasks.Webpack.Compile do
+  import Reaxt.Build.Utils
+  
   @shortdoc "Compiles Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
@@ -28,11 +63,15 @@ defmodule Mix.Tasks.Webpack.Compile do
   end
   def compile_server() do
     server_config = "./node_modules/reaxt/server.webpack.config.js"
-    System.cmd("node",[@webpack,"--config",server_config,"--colors"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    :ok = cmd("node",[@webpack,"--config",server_config,"--colors"],
+      {:build, "#{WebPack.Util.web_app} / server"},
+      cd: WebPack.Util.web_app)
   end
   def compile_client() do
     client_config = "./node_modules/reaxt/client.webpack.config.js"
-    System.cmd("node",[@webpack,"--config",client_config,"--json"], into: "", cd: WebPack.Util.web_app)
+    :ok = cmd("node", [@webpack,"--config",client_config,"--json"],
+      {:build, "#{WebPack.Util.web_app} / client"},
+      cd: WebPack.Util.web_app)
   end
 end
 
