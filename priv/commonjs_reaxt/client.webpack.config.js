@@ -14,4 +14,4 @@ function add_to_entries(obj,newEntry){
 }
 add_to_entries(client_config,require.resolve("./client_entry_addition"))
 module.exports = client_config
-module.exports.add_to_entries = add_to_entries
+//module.exports.add_to_entries = add_to_entries

@@ -22,16 +22,16 @@ defmodule Reaxt do
   alias :poolboy, as: Pool
   require Logger
 
-  def render_result(module,data,timeout) when not is_tuple(module), do:
-    render_result({module,nil},data,timeout)
-  def render_result({module,submodule},data,timeout) do
-    Pool.transaction(:react_pool,fn worker->
+  def render_result(chunk,module,data,timeout) when not is_tuple(module), do:
+    render_result(chunk,{module,nil},data,timeout)
+  def render_result(chunk,{module,submodule},data,timeout) do
+    Pool.transaction(:"react_#{chunk}_pool",fn worker->
       GenServer.call(worker,{:render,module,submodule,data,timeout},timeout+100)
     end)
   end
 
-  def render!(module,data, timeout \\ 5_000) do
-    case render_result(module,data,timeout) do
+  def render!(module,data,timeout \\ 5_000, chunk \\ :server) do
+    case render_result(chunk,module,data,timeout) do
       {:ok,res}->res
       {:error,err}->
         try do raise(ReaxtError,err)
@@ -63,13 +63,13 @@ defmodule Reaxt do
     Supervisor.restart_child(Reaxt.App.Sup,:react)
   end
 
-  def start_link([]) do
-    if not File.exists?("#{WebPack.Util.web_priv}/server.js") do
-      Logger.error("server.js not yet compiled, compile it before with `mix webpack.compile`")
+  def start_link(server_path) do
+    if not File.exists?("#{WebPack.Util.web_priv}/#{server_path}") do
+      Logger.error("#{server_path} not yet compiled, compile it before with `mix webpack.compile`")
       {:error,:serverjs_not_compiled}
     else
       init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-      Exos.Proc.start_link("node server",init,[cd: '#{WebPack.Util.web_priv}'])
+      Exos.Proc.start_link("node #{server_path}",init,[cd: '#{WebPack.Util.web_priv}'])
     end
   end
 
@@ -86,12 +86,14 @@ defmodule Reaxt do
         pool_size = Application.get_env(:reaxt,:pool_size)
         pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
         dev_workers = if Application.get_env(:reaxt,:hot),
-           do: [worker(WebPack.Compiler.Client,[]),
-                worker(WebPack.Compiler.Server,[]),
+           do: [worker(WebPack.Compiler,[]),
                 worker(WebPack.EventManager,[])], else: []
-        supervise([
-          Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,:react_pool}], [])
-        ]++dev_workers, strategy: :one_for_one)
+        servers = Application.get_env(:reaxt,"servers",["server.js"])
+        supervise(for server<-servers do
+          pool = :"react_#{server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/,"_")}_pool"
+          IO.puts "will start pool #{inspect pool}"
+          Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,pool}], server)
+        end ++ dev_workers, strategy: :one_for_one)
       end
     end
   end

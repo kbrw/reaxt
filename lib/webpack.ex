@@ -69,7 +69,7 @@ defmodule WebPack.EventManager do
   require Logger
   def start_link do
     res = GenEvent.start_link(name: WebPack.Events)
-    GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false, compiled: %{server: false, client: false}})
+    GenEvent.add_handler(WebPack.Events,__MODULE__,%{init: true,pending: [], compiling: false, compiled: false})
     receive do :server_ready-> :ok end
     res
   end
@@ -79,9 +79,11 @@ defmodule WebPack.EventManager do
   def handle_call({:wait?,reply_to},state), do:
     {:ok,:wait,%{state|pending: [reply_to|state.pending]}}
 
-  def handle_event(%{event: "server_done"}=ev,state) do
+  def handle_event(%{event: "client_done"}=ev,state) do
+    Logger.info("[reaxt-webpack] client done, build_stats")
+    WebPack.Util.build_stats
     if(!state.init) do
-      Logger.info("[reaxt-webpack] server done, restart servers")
+      Logger.info("[reaxt-webpack] client done, restart servers")
       :ok = Supervisor.terminate_child(Reaxt.App.Sup,:react)
       {:ok,_} = Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
@@ -90,22 +92,14 @@ defmodule WebPack.EventManager do
       if ev[:error] != "soft fail", do:
         System.halt(1)
     end
-    {:ok,try_done(:server,state)}
+    for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warn(error)
+    for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warn(warning)
+    {:ok,done(state)}
   end
 
-  def handle_event(%{event: "client_done"}=ev,state) do
-    Logger.info("[reaxt-webpack] client done, build_stats")
-    WebPack.Util.build_stats
-    if ev[:error] do
-      Logger.error("[reaxt-webpack] error compiling client_side JS #{ev[:error]}")
-    end
-    for error<-WebPack.stats.errors, do: Logger.warn(error)
-    for warning<-WebPack.stats.warnings, do: Logger.warn(warning)
-    {:ok,try_done(:client,state)}
-  end
   def handle_event(%{event: "client_invalid"},%{compiling: false}=state) do
     Logger.info("[reaxt-webpack] detect client file change")
-    {:ok,%{state|compiling: true, compiled: %{client: false, server: false}}}
+    {:ok,%{state|compiling: true, compiled: false}}
   end
   def handle_event(%{event: "done"},state) do
     Logger.info("[reaxt-webpack] both done !")
@@ -116,29 +110,18 @@ defmodule WebPack.EventManager do
     {:ok,state}
   end
 
-  def try_done(:server,%{compiled: %{client: true}}=state), do: done(state)
-  def try_done(:client,%{compiled: %{server: true}}=state), do: done(state)
-  def try_done(other,state), do: put_in(state,[:compiled,other],true)
   def done(state) do
     for pid<-state.pending, do: send(pid,:ok)
     if state.init, do: send(Process.whereis(Reaxt.App.Sup),:server_ready)
     GenEvent.notify(WebPack.Events,%{event: "done"})
-    %{state| pending: [], init: false, compiling: false, compiled: %{client: true, server: true}}
+    %{state| pending: [], init: false, compiling: false, compiled: true}
   end
 end
 
-defmodule WebPack.Compiler.Client do
+defmodule WebPack.Compiler do
   def start_link do
-    cmd = "node ./node_modules/reaxt/webpack_server_client"
+    cmd = "node ./node_modules/reaxt/webpack_server"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
-  end
-end
-
-defmodule WebPack.Compiler.Server do
-  def start_link do
-    cmd = "node ./node_modules/reaxt/webpack_server_server"
-    hot_arg = if Application.get_env(:reaxt,:hot), do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
   end
 end
@@ -157,15 +140,21 @@ defmodule WebPack.Util do
 
   def build_stats do
     if File.exists?("#{web_priv}/webpack.stats.json") do
-      stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"))
-      stats = %{assetsByChunkName: stats["assetsByChunkName"],
+      all_stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"))
+      stats = all_stats["children"] |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
+         {idx,%{assetsByChunkName: stats["assetsByChunkName"],
                 errors: stats["errors"],
-                warnings: stats["warnings"]}
+                warnings: stats["warnings"]}}
+      end)
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats
         def file_of(name) do
-          case WebPack.stats.assetsByChunkName["#{name}"] do
+          r = Enum.find_value(WebPack.stats,
+            fn {_,%{assetsByChunkName: assets}}->
+              assets["#{name}"]
+            end)
+          case r do
             [f|_]->f
             f -> f
           end
