@@ -64,13 +64,8 @@ defmodule Reaxt do
   end
 
   def start_link(server_path) do
-    if not File.exists?("#{WebPack.Util.web_priv}/#{server_path}") do
-      Logger.error("#{server_path} not yet compiled, compile it before with `mix webpack.compile`")
-      {:error,:serverjs_not_compiled}
-    else
-      init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-      Exos.Proc.start_link("node #{server_path}",init,[cd: '#{WebPack.Util.web_priv}'])
-    end
+    init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
+    Exos.Proc.start_link("node #{server_path}",init,[cd: '#{WebPack.Util.web_priv}'])
   end
 
   defmodule App do
@@ -83,17 +78,28 @@ defmodule Reaxt do
     defmodule Sup do
       use Supervisor
       def init([]) do
-        pool_size = Application.get_env(:reaxt,:pool_size)
-        pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
         dev_workers = if Application.get_env(:reaxt,:hot),
            do: [worker(WebPack.Compiler,[]),
                 worker(WebPack.EventManager,[])], else: []
-        servers = Application.get_env(:reaxt,"servers",["server.js"])
-        supervise(for server<-servers do
-          pool = :"react_#{server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/,"_")}_pool"
-          IO.puts "will start pool #{inspect pool}"
-          Pool.child_spec(:react,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,pool}], server)
-        end ++ dev_workers, strategy: :one_for_one)
+        supervise([Supervisor.Spec.supervisor(__MODULE__,[],function: :start_pools,id: :react)
+          |dev_workers], strategy: :one_for_one)
+      end
+
+      def start_pools do
+        pool_size = Application.get_env(:reaxt,:pool_size)
+        pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
+        server_dir = "#{WebPack.Util.web_priv}/#{Application.get_env(:reaxt,:server_dir)}"
+        server_files = Path.wildcard("#{server_dir}/*.js")
+        if server_files == [] do
+          Logger.error("#server JS not yet compiled in #{server_dir}, compile it before with `mix webpack.compile`")
+          throw {:error,:serverjs_not_compiled}
+        else
+          Supervisor.start_link(
+            for server<-server_files do
+              pool = :"react_#{server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/,"_")}_pool"
+              Pool.child_spec(pool,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,pool}], server)
+            end, strategy: :one_for_one)
+        end
       end
     end
   end

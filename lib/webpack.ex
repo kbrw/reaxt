@@ -120,13 +120,17 @@ end
 
 defmodule WebPack.Compiler do
   def start_link do
-    cmd = "node ./node_modules/reaxt/webpack_server"
+    cmd = "node ./node_modules/reaxt/webpack_server #{WebPack.Util.webpack_config}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
   end
 end
 
 defmodule WebPack.Util do
+  def webpack_config do
+    Application.get_env(:reaxt,:webpack_config,"webpack.config.js")
+  end
+
   def web_priv do
     case Application.get_env :reaxt, :otp_app, :no_app_specified do
       :no_app_specified -> :no_app_specified

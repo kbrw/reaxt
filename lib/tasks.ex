@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Webpack.Compile do
     File.write!("priv/webpack.stats.json",json)
   end
   def compile() do
-    config = "./webpack.config.js"
+    config = "./"<>WebPack.Util.webpack_config
     System.cmd("node",[@webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
   end
 end
