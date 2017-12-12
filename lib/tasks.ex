@@ -2,7 +2,10 @@ defmodule Mix.Tasks.Npm.Install do
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
     System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
-    System.cmd("npm",["install","#{:code.priv_dir(:reaxt)}/commonjs_reaxt"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    # TOIMPROVE- did not found a better hack to avoid npm install symlink : first make a tar gz package, then npm install it
+    reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
+    System.cmd("tar", ["zcf",reaxt_tgz,"commonjs_reaxt"],into: IO.stream(:stdio, :line), cd: "#{:code.priv_dir(:reaxt)}")
+    System.cmd("npm",["install",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
   end
 end
 
