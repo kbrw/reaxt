@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Npm.Install do
     # TOIMPROVE- did not found a better hack to avoid npm install symlink : first make a tar gz package, then npm install it
     reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
     System.cmd("tar", ["zcf",reaxt_tgz,"commonjs_reaxt"],into: IO.stream(:stdio, :line), cd: "#{:code.priv_dir(:reaxt)}")
-    System.cmd("npm",["install",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    System.cmd("npm",["install","--no-save",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
   end
 end
 
