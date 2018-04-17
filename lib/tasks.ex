@@ -1,21 +1,30 @@
 defmodule Mix.Tasks.Npm.Install do
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
+  
   def run(_args) do
-    System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    {:ok, _} = Nox.Npm.install(WebPack.Util.web_app())
+
     # TOIMPROVE- did not found a better hack to avoid npm install symlink : first make a tar gz package, then npm install it
     reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
-    System.cmd("tar", ["zcf",reaxt_tgz,"commonjs_reaxt"],into: IO.stream(:stdio, :line), cd: "#{:code.priv_dir(:reaxt)}")
-    System.cmd("npm",["install","--no-save",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    System.cmd("tar", ["zcf", reaxt_tgz, "commonjs_reaxt"], into: Nox.Cli.stream(), cd: "#{:code.priv_dir(:reaxt)}")
+
+    {:ok, _} = Nox.Npm.install(WebPack.Util.web_app(), reaxt_tgz, no_save: true)
   end
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
   @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
+
   def run(_args) do
     File.rm_rf!("priv/static")
-    {_,0} = System.cmd("git",["clone","-b","ajax-sse-loading","https://github.com/awetzel/analyse"], into: IO.stream(:stdio, :line))
-    {_,0} = System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: "analyse")
-    {_,0} = System.cmd("grunt",[], into: IO.stream(:stdio, :line), cd: "analyse")
+
+    {_,0} = System.cmd("git", ["clone", "-b", "ajax-sse-loading", "https://github.com/awetzel/analyse"],
+      into: Nox.Cli.stream())
+
+    {:ok, _} = Nox.Npm.install("analyse")
+    {:ok, _} = Nox.Npm.install_global("grunt")
+    {:ok, _} = Nox.Grunt.run("analyse")
+
     File.cp_r!("analyse/dist", "priv/static")
     File.rm_rf!("analyse")
   end
@@ -24,13 +33,16 @@ end
 defmodule Mix.Tasks.Webpack.Compile do
   @shortdoc "Compiles Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
+
   def run(_) do
     {json,0} = compile()
     File.write!("priv/webpack.stats.json",json)
   end
+  
   def compile() do
-    config = "./"<>WebPack.Util.webpack_config
-    System.cmd("node",[@webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
+    config = "./" <> WebPack.Util.webpack_config()
+    System.cmd(Nox.which("node"), [@webpack, "--config", config, "--json"],
+      into: "", cd: WebPack.Util.web_app(), env: Nox.env())
   end
 end
 

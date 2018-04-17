@@ -24,11 +24,12 @@ defmodule Reaxt.Mixfile do
   end
 
   defp deps do
-    [{:exos, "1.0.0"},
+    [{:nox, ">= 0.0.0"},
+     {:exos, "1.0.0"},
      {:poolboy, "~> 1.5.0"},
      {:cowboy,"~> 1.0.0"},
      {:plug, "~> 1.0"},
-     {:poison,"~> 2.1.0"},
+     {:poison,"~> 3.1"},
      {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 

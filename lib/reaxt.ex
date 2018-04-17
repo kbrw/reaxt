@@ -65,7 +65,12 @@ defmodule Reaxt do
 
   def start_link(server_path) do
     init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-    Exos.Proc.start_link("node #{server_path}",init,[cd: '#{WebPack.Util.web_priv}'])
+    opts = [
+      cd: '#{WebPack.Util.web_priv}',
+      env: Nox.env() |> Enum.map(fn {name, val} -> {'#{name}', '#{val}'} end)
+    ]
+    exe = Nox.which("node")
+    Exos.Proc.start_link("#{exe} #{server_path}", init, opts)
   end
 
   defmodule App do
