@@ -1,51 +1,23 @@
-defmodule WebPack.Util do
-  def webpack_config do
-    Application.get_env(:reaxt,:webpack_config,"webpack.config.js")
-  end
+defmodule WebPack do
+  @moduledoc """
+  This module is supposed to be regenerated at runtime by `WebPack.Util.build_stats/0`
+  """
 
-  def web_priv do
-    case Application.get_env :reaxt, :otp_app, :no_app_specified do
-      :no_app_specified -> :no_app_specified
-      web_app -> :code.priv_dir(web_app)
-    end
-  end
-
-  def web_app do
-    Application.get_env :reaxt, :web_app, "web"
-  end
-
-  def build_stats do
-    if File.exists?("#{web_priv}/webpack.stats.json") do
-      all_stats = Poison.Parser.parse!(File.read!("#{web_priv}/webpack.stats.json"))
-      stats = all_stats["children"] |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
-         {idx,%{assetsByChunkName: stats["assetsByChunkName"],
-                errors: stats["errors"],
-                warnings: stats["warnings"]}}
-      end)
-      defmodule Elixir.WebPack do
-        @stats stats
-        def stats, do: @stats
-        def file_of(name) do
-          r = Enum.find_value(WebPack.stats,
-            fn {_,%{assetsByChunkName: assets}}->
-              assets["#{name}"]
-            end)
-          case r do
-            [f|_]->f
-            f -> f
-          end
-        end
-        @header_script if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
-        @header_global Poison.encode!(Application.get_env(:reaxt,:global_config))
-        def header, do:
-          "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
-      end
-    end
-  end
-end
-
-defmodule Elixir.WebPack do
+  @doc """
+  Returns stats as from webpack.stats.json
+  """
+  @spec stats() :: map
   def stats, do: %{assetsByChunkName: %{}}
+
+  @doc """
+  Returns file name where is defined given asset
+  """
+  @spec file_of(asset :: String.t) :: nil | Path.t
   def file_of(_), do: nil
+
+  @doc """
+  Returns header for including stats into webpage
+  """
+  @spec header() :: String.t
   def header, do: ""
 end
