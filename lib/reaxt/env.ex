@@ -5,7 +5,8 @@ defmodule Reaxt.Env do
 
   @doc false
   def start_link do
-    env = Nox.Env.new(shared: true)
+    # Use the same env for build and run
+    env = Mix.Reaxt.Common.env()
     :ok = Nox.Make.all(env)
     
     Agent.start_link(fn -> env end, name: __MODULE__)
