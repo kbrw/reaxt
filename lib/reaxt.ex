@@ -1,23 +1,3 @@
-defmodule ReaxtError do
-  defexception [:message,:js_render,:js_stack]
-  def exception({:handler_error,error,stack}) do
-    %ReaxtError{message: "JS Exception : #{error}", js_stack: (stack && parse_stack(stack))}
-  end
-  def exception({:render_error,error,stack,js_render}) do
-    %ReaxtError{message: "JS Exception : #{error}", js_render: js_render, js_stack: (stack && parse_stack(stack))}
-  end
-  defp parse_stack(stack) do
-    Regex.scan(~r/at (.*) \((.*):([0-9]*):[0-9]*\)/,stack)
-    |> Enum.map(fn [_,function,url,line]->
-      if String.contains?(url,"/priv") and !(function in ["Port.next_term","Socket.read_term"]) do
-        {line,_} = Integer.parse(line)
-        [_,after_priv] = String.split(url,"/priv/",parts: 2)
-        {JS,:"#{function}",0,file: '#{WebPack.Util.web_priv}/#{after_priv}', line: line}
-      end
-    end)
-    |> Enum.filter(&!is_nil(&1))
-  end
-end
 defmodule Reaxt do
   alias :poolboy, as: Pool
   require Logger
@@ -34,7 +14,7 @@ defmodule Reaxt do
     case render_result(chunk,module,data,timeout) do
       {:ok,res}->res
       {:error,err}->
-        try do raise(ReaxtError,err)
+        try do raise(Reaxt.Error,err)
         rescue ex->
           [_|stack] = System.stacktrace
           reraise ex, ((ex.js_stack || []) ++ stack)
