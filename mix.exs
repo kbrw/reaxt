@@ -26,7 +26,7 @@ defmodule Reaxt.Mixfile do
   ]
 
   defp deps, do: [
-    {:nox, ">= 0.3.0"},
+    {:nox, "~> 0.3"},
     {:exos, "~> 1.0"},
     {:poolboy, "~> 1.5.0"},
     {:cowboy,"~> 1.0.0"},
