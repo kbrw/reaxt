@@ -1,0 +1,6 @@
+/web/node_modules
+/web/package-lock.json
+/priv
+/deps
+/_build
+/mix.lock

@@ -1,29 +1,47 @@
 defmodule Mix.Tasks.Npm.Install do
-  @shortdoc "`npm install` in web_dir + npm install server side dependencies"
+  use Mix.Task
   
+  @moduledoc """
+  Install node modules for web app
+  """
+
+  @shortdoc "`npm install` in web_dir + npm install server side dependencies"
+
+  @doc false
   def run(_args) do
-    {:ok, _} = Nox.Npm.install(WebPack.Util.web_app())
+    env = Nox.Env.default()
+    
+    {:ok, _} = Nox.Npm.install(env, WebPack.Util.web_app())
 
     # TOIMPROVE- did not found a better hack to avoid npm install symlink : first make a tar gz package, then npm install it
     reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
     System.cmd("tar", ["zcf", reaxt_tgz, "commonjs_reaxt"], into: Nox.Cli.stream(), cd: "#{:code.priv_dir(:reaxt)}")
 
-    {:ok, _} = Nox.Npm.install(WebPack.Util.web_app(), reaxt_tgz, no_save: true)
+    {:ok, _} = Nox.Npm.install(env, WebPack.Util.web_app(), reaxt_tgz, no_save: true)
   end
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
-  @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
+  use Mix.Task
 
+  @moduledoc """
+  Generate webpack stats analysing application, resulting priv/static is meant to be versionned
+  """
+  
+  @shortdoc "Generate webpack stats analysing application"
+
+  @doc false
   def run(_args) do
+    env = Nox.Env.default()
+    
     File.rm_rf!("priv/static")
 
     {_,0} = System.cmd("git", ["clone", "-b", "ajax-sse-loading", "https://github.com/awetzel/analyse"],
       into: Nox.Cli.stream())
 
-    {:ok, _} = Nox.Npm.install("analyse")
-    {:ok, _} = Nox.Npm.install_global("grunt")
-    {:ok, _} = Nox.Grunt.run("analyse")
+    {:ok, _} = Nox.Npm.install(env, "analyse")
+    {:ok, _} = Nox.Npm.install_global(env, "grunt")
+    {:ok, _} = Nox.Grunt.run(env, "analyse")
 
     File.cp_r!("analyse/dist", "priv/static")
     File.rm_rf!("analyse")
@@ -31,32 +49,46 @@ defmodule Mix.Tasks.Webpack.Analyseapp do
 end
 
 defmodule Mix.Tasks.Webpack.Compile do
+  use Mix.Task
+
+  @moduledoc """
+  Compile Webpack
+  """
+  
   @shortdoc "Compiles Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
 
+  @doc false
   def run(_) do
     {json,0} = compile()
     File.write!("priv/webpack.stats.json",json)
   end
   
-  def compile() do
+  defp compile() do
+    env = Nox.Env.default()
     config = "./" <> WebPack.Util.webpack_config()
-    System.cmd(Nox.which("node"), [@webpack, "--config", config, "--json"],
-      into: "", cd: WebPack.Util.web_app(), env: Nox.env())
+    System.cmd(Nox.which(env, "node"), [@webpack, "--config", config, "--json"],
+      into: "", cd: WebPack.Util.web_app(), env: Nox.sys_env(env))
   end
 end
 
 defmodule Mix.Tasks.Reaxt.Validate do
-  @shortdoc "Validates that reaxt is setup correct"
   use Mix.Task
 
+  @moduledoc """
+  Validate reaxt setup
+  """
+
+  @shortdoc "Validates that reaxt is setup correct"
+
+  @doc false
   def run(args) do
     if Enum.all?(args, &(&1 != "--reaxt-skip-validation")) do
       validate(args)
     end
   end
 
-  def validate(args) do
+  defp validate(args) do
     if WebPack.Util.web_priv == :no_app_specified, do:
       Mix.raise """
                 Reaxt :otp_app is not configured.
@@ -106,19 +138,31 @@ defmodule Mix.Tasks.Reaxt.Validate do
 end
 
 defmodule Mix.Tasks.Compile.ReaxtWebpack do
+  use Mix.Task
+
+  @moduledoc """
+  Compiler for building web app with reaxt
+  """
+
+  @shortdoc "Compiler for building web app with reaxt"
+
+  @doc false
   def run(args) do
     Mix.Task.run("reaxt.validate", args ++ ["--reaxt-skip-compiler-check"])
 
-    if !File.exists?(Path.join(WebPack.Util.web_app, "node_modules")) do
+    if !File.exists?(Path.join(WebPack.Util.web_app(), "node_modules")) do
       Mix.Task.run("npm.install", args)
     else
-      installed_version = Poison.decode!(File.read!("#{WebPack.Util.web_app}/node_modules/reaxt/package.json"))["version"]
+      installed_version = Poison.decode!(File.read!("#{WebPack.Util.web_app()}/node_modules/reaxt/package.json"))["version"]
       current_version = Poison.decode!(File.read!("#{:code.priv_dir(:reaxt)}/commonjs_reaxt/package.json"))["version"]
       if  installed_version !== current_version, do:
         Mix.Task.run("npm.install", args)
     end
 
-    if !Application.get_env(:reaxt,:hot), do:
+    if ! Application.get_env(:reaxt, :hot) do
       Mix.Task.run("webpack.compile", args)
+    end
+
+    :ok
   end
 end

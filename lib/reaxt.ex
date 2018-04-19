@@ -64,12 +64,13 @@ defmodule Reaxt do
   end
 
   def start_link(server_path) do
+    env = Nox.Env.default()
     init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
     opts = [
       cd: '#{WebPack.Util.web_priv}',
-      env: Nox.env() |> Enum.map(fn {name, val} -> {'#{name}', '#{val}'} end)
+      env: Nox.sys_env(env) |> Enum.map(fn {name, val} -> {'#{name}', '#{val}'} end)
     ]
-    exe = Nox.which("node")
+    exe = Nox.which(env, "node")
     Exos.Proc.start_link("#{exe} #{server_path}", init, opts)
   end
 
@@ -84,8 +85,8 @@ defmodule Reaxt do
       use Supervisor
       def init([]) do
         dev_workers = if Application.get_env(:reaxt,:hot),
-           do: [worker(WebPack.Compiler,[]),
-                worker(WebPack.EventManager,[])], else: []
+          do: [worker(WebPack.Compiler,[]),
+               worker(WebPack.EventManager,[])], else: []
         supervise([Supervisor.Spec.supervisor(__MODULE__,[],function: :start_pools,id: :react)
           |dev_workers], strategy: :one_for_one)
       end
