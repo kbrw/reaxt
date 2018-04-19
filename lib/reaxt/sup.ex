@@ -9,16 +9,15 @@ defmodule Reaxt.Sup do
   @doc false
   def init([]) do
     dev_workers = if Application.get_env(:reaxt, :hot) do
-      [
-	worker(Reaxt.Env, []),
-	worker(WebPack.Compiler, []),
-	worker(WebPack.EventManager, [])
-      ]
+      [ worker(WebPack.Compiler, []),
+	worker(WebPack.EventManager, []) ]
     else
       []
     end
-    supervise([Supervisor.Spec.supervisor(__MODULE__, [], function: :start_pools,id: :react) | dev_workers],
-      strategy: :one_for_one)
+    supervise([
+      worker(Reaxt.Env, []),
+      Supervisor.Spec.supervisor(__MODULE__, [], function: :start_pools,id: :react)
+      | dev_workers ], strategy: :one_for_one)
   end
 
   @doc false
