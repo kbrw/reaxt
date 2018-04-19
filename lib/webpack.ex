@@ -84,8 +84,8 @@ defmodule WebPack.EventManager do
     WebPack.Util.build_stats
     if(!state.init) do
       Logger.info("[reaxt-webpack] client done, restart servers")
-      :ok = Supervisor.terminate_child(Reaxt.App.Sup,:react)
-      {:ok,_} = Supervisor.restart_child(Reaxt.App.Sup,:react)
+      :ok = Supervisor.terminate_child(Reaxt.Sup,:react)
+      {:ok,_} = Supervisor.restart_child(Reaxt.Sup,:react)
     end
     if ev[:error] do
       Logger.error("[rext-webpack] error compiling server_side JS #{ev[:error]}")
@@ -112,7 +112,7 @@ defmodule WebPack.EventManager do
 
   def done(state) do
     for pid<-state.pending, do: send(pid,:ok)
-    if state.init, do: send(Process.whereis(Reaxt.App.Sup),:server_ready)
+    if state.init, do: send(Process.whereis(Reaxt.Sup),:server_ready)
     GenEvent.notify(WebPack.Events,%{event: "done"})
     %{state| pending: [], init: false, compiling: false, compiled: true}
   end

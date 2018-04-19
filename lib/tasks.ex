@@ -60,7 +60,7 @@ defmodule Mix.Tasks.Webpack.Compile do
 
   @doc false
   def run(_) do
-    {json,0} = compile()
+    {json, 0} = compile()
     File.write!("priv/webpack.stats.json",json)
   end
   
