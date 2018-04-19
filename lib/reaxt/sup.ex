@@ -10,6 +10,7 @@ defmodule Reaxt.Sup do
   def init([]) do
     dev_workers = if Application.get_env(:reaxt, :hot) do
       [
+	worker(Reaxt.Env, []),
 	worker(WebPack.Compiler, []),
 	worker(WebPack.EventManager, [])
       ]
@@ -33,9 +34,10 @@ defmodule Reaxt.Sup do
     else
       children = for server <- server_files do
 	id = server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/, "_")
-        pool = :"react_#{id}_pool"
-	opts = [ worker_module: Reaxt, size: pool_size, max_overflow: pool_overflow, name: {:local, pool} ]
-        :poolboy.child_spec(pool, opts, server)
+        pool_id = :"react_#{id}_pool"
+	opts = [ worker_module: Reaxt, size: pool_size, max_overflow: pool_overflow, name: {:local, pool_id} ]
+	Logger.info("Starting reaxt pool #{pool_id}")
+        :poolboy.child_spec(pool_id, opts, server)
       end
       Supervisor.start_link(children, strategy: :one_for_one)
     end
