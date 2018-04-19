@@ -7,7 +7,7 @@ defmodule Reaxt.Mixfile do
     description: description(),
     package: package(),
     elixir: ">= 1.0.0",
-    compilers: [:nox] ++ Mix.compilers(),
+    compilers: Mix.compilers(),
     deps: deps(),
     aliases: aliases()
   ]
@@ -26,7 +26,7 @@ defmodule Reaxt.Mixfile do
   ]
 
   defp deps, do: [
-    {:nox, ">= 0.2.0"},
+    {:nox, ">= 0.3.0"},
     {:exos, "~> 1.0"},
     {:poolboy, "~> 1.5.0"},
     {:cowboy,"~> 1.0.0"},

@@ -5,7 +5,10 @@ defmodule Reaxt.Env do
 
   @doc false
   def start_link do
-    Agent.start_link(fn -> Nox.Env.default() end, name: __MODULE__)
+    env = Nox.Env.new(shared: true)
+    :ok = Nox.Make.all(env)
+    
+    Agent.start_link(fn -> env end, name: __MODULE__)
   end
 
   @doc """
