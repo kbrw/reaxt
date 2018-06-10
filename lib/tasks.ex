@@ -3,11 +3,14 @@ defmodule Mix.Tasks.Npm.Install do
   @shortdoc "`npm install` in web_dir" # + npm install server side dependencies"
   def run(_args) do
     {_, 0} = System.cmd("npm", ["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
-    # TOIMPROVE - did not find a better hack to avoid `npm install`'s symlinks.
-    # First we make a tar gz package, then npm installs it.
-    #reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
-    #System.cmd("tar", ["zcf",reaxt_tgz,"commonjs_reaxt"],into: IO.stream(:stdio, :line), cd: "#{:code.priv_dir(:reaxt)}")
-    #System.cmd("npm",["install","--no-save",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    reaxt_js_root = Application.get_env(:reaxt, :reaxt_js_root, "reaxt")
+    if not File.exists?("#{WebPack.Util.web_app}/node_modules/#{reaxt_js_root}") do
+      # TOIMPROVE - did not find a better hack to avoid `npm install`'s symlinks.
+      # First we make a tar gz package, then npm installs it.
+      reaxt_tgz = "#{System.tmp_dir}/reaxt.tgz"
+      System.cmd("tar", ["zcf",reaxt_tgz,"commonjs_reaxt"],into: IO.stream(:stdio, :line), cd: "#{:code.priv_dir(:reaxt)}")
+      System.cmd("npm",["install","--no-save",reaxt_tgz], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
+    end
     :ok
   end
 end
