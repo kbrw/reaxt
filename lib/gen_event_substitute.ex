@@ -73,7 +73,7 @@ defmodule GenEventSubstitute do
   end
 
   def call(manager, handler, request, timeout \\ 5_000) do
-    :gen_event.call(manager, request, timeout)
+    :gen_event.call(manager, handler, request, timeout)
   end
 
   def add_mon_handler(manager, handler, args) do
