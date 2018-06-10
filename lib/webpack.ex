@@ -50,7 +50,6 @@ defmodule WebPack.Plug.Static do
     if hot? do
       GenEventSubstitute.add_mon_handler(WebPack.Events, {WebPack.Plug.Static.EventHandler, make_ref()}, conn)
     end
-    Logger.debug("get /webpack/events 4")
     receive do {:gen_event_EXIT,_,_} -> halt(conn) end
   end
 
