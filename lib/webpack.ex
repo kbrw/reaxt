@@ -40,17 +40,13 @@ defmodule WebPack.Plug.Static do
   get "/webpack" do %{conn | path_info: ["webpack","static","index.html"]} end
 
   get "/webpack/events" do
-    require Logger
-    Logger.debug("get /webpack/events")
     conn =
       conn
       |> put_resp_header("content-type", "text/event-stream")
       |> send_chunked(200)
 
-    Logger.debug("get /webpack/events 2")
     hot? = Application.get_env(:reaxt, :hot)
     if hot? == :client do Plug.Conn.chunk(conn, "event: hot\ndata: nothing\n\n") end
-    Logger.debug("get /webpack/events 3")
     if hot? do
       GenEventSubstitute.add_mon_handler(WebPack.Events, {WebPack.Plug.Static.EventHandler, make_ref()}, conn)
     end
@@ -72,8 +68,6 @@ defmodule WebPack.Plug.Static do
     use GenEventSubstitute
 
     def handle_event(ev, conn) do #Send all builder events to browser through SSE
-      require Logger
-      Logger.debug("EventHandler: ev => #{inspect(ev)}")
       Plug.Conn.chunk(conn, "event: #{ev.event}\ndata: #{Poison.encode!(ev)}\n\n")
       {:ok, conn}
     end
