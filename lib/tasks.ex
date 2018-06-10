@@ -1,4 +1,5 @@
 defmodule Mix.Tasks.Npm.Install do
+  use Mix.Task
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
     System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
@@ -10,6 +11,7 @@ defmodule Mix.Tasks.Npm.Install do
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
+  use Mix.Task
   @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
   def run(_args) do
     File.rm_rf!("priv/static")
@@ -22,6 +24,7 @@ defmodule Mix.Tasks.Webpack.Analyseapp do
 end
 
 defmodule Mix.Tasks.Webpack.Compile do
+  use Mix.Task
   @shortdoc "Compiles Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
@@ -35,8 +38,8 @@ defmodule Mix.Tasks.Webpack.Compile do
 end
 
 defmodule Mix.Tasks.Reaxt.Validate do
-  @shortdoc "Validates that reaxt is setup correct"
   use Mix.Task
+  @shortdoc "Validates that reaxt is setup correct"
 
   def run(args) do
     if Enum.all?(args, &(&1 != "--reaxt-skip-validation")) do
@@ -94,6 +97,7 @@ defmodule Mix.Tasks.Reaxt.Validate do
 end
 
 defmodule Mix.Tasks.Compile.ReaxtWebpack do
+  use Mix.Task
   def run(args) do
     Mix.Task.run("reaxt.validate", args ++ ["--reaxt-skip-compiler-check"])
 
