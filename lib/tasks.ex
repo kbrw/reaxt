@@ -33,9 +33,20 @@ defmodule Mix.Tasks.Webpack.Compile do
   @shortdoc "Compiles with Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
-    {json,0} = compile()
-    File.write!("priv/webpack.stats.json", json)
+    case compile() do
+      {json, 0} ->
+        File.write!("priv/webpack.stats.json", json)
+        :ok
+      {ret, 2} ->
+        require Logger
+        ret
+        |> Poison.decode!()
+        |> Map.fetch!("errors")
+        |> Enum.map(&Logger.error/1)
+        :error
+    end
   end
+
   def compile() do
     config = "./" <> WebPack.Util.webpack_config
     System.cmd("node", [@webpack, "--config", config, "--json"], into: "", cd: WebPack.Util.web_app)
