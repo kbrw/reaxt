@@ -1,4 +1,6 @@
 defmodule Mix.Tasks.Npm.Install do
+  use Mix.Task
+
   @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
     System.cmd("npm",["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
@@ -10,6 +12,8 @@ defmodule Mix.Tasks.Npm.Install do
 end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
+  use Mix.Task
+
   @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
   def run(_args) do
     File.rm_rf!("priv/static")
@@ -22,12 +26,25 @@ defmodule Mix.Tasks.Webpack.Analyseapp do
 end
 
 defmodule Mix.Tasks.Webpack.Compile do
+  use Mix.Task
+
   @shortdoc "Compiles Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
-    {json,0} = compile()
-    File.write!("priv/webpack.stats.json",json)
+    case compile() do
+      {json, 0} ->
+        File.write!("priv/webpack.stats.json", json)
+
+      {ret, 2} ->
+        require Logger
+        ret
+        |> Poison.decode!()
+        |> Map.fetch!("errors")
+        |> Enum.map(&Logger.error/1)
+        :error
+    end
   end
+
   def compile() do
     config = "./"<>WebPack.Util.webpack_config
     System.cmd("node",[@webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
@@ -35,9 +52,9 @@ defmodule Mix.Tasks.Webpack.Compile do
 end
 
 defmodule Mix.Tasks.Reaxt.Validate do
-  @shortdoc "Validates that reaxt is setup correct"
   use Mix.Task
 
+  @shortdoc "Validates that reaxt is setup correct"
   def run(args) do
     if Enum.all?(args, &(&1 != "--reaxt-skip-validation")) do
       validate(args)
