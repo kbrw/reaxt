@@ -10,8 +10,8 @@ window.reaxt_render = function(module,submodule,props,param){
   submodule = (submodule) ? module[submodule] :module
   submodule.reaxt_client_render = submodule.reaxt_client_render || default_client_render
   return function(elemid){ 
-    submodule.reaxt_client_render(props,function(comp){
-      ReactDOM.render(comp,document.getElementById(elemid))
+    submodule.reaxt_client_render(props,function(comp,args,callback){
+      ReactDOM.render(comp,document.getElementById(elemid),callback)
     },param)
   }
 }
