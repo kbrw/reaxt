@@ -70,7 +70,7 @@ Server(function(term,from,state,done){
                (error.stack && error.stack || Bert.atom("nil")))))
     })
     d.run(function(){
-      handler.reaxt_server_render(args,function(component,param){
+      handler.reaxt_server_render(args,function(component,param,callback){
         clearTimeout(timeout_handler)
         if(ref === current_ref){
           done("reply",rendering(component,module,submodule,param))
