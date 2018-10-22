@@ -144,7 +144,7 @@ defmodule WebPack.Util do
 
   def build_stats do
     if File.exists?("#{web_priv()}/webpack.stats.json") do
-      all_stats = Poison.Parser.parse!(File.read!("#{web_priv()}/webpack.stats.json"))
+      all_stats = Poison.decode!(File.read!("#{web_priv()}/webpack.stats.json"))
       stats = all_stats["children"] |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
          {idx,%{assetsByChunkName: stats["assetsByChunkName"],
                 errors: stats["errors"],
