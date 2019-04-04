@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Npm.Install do
   use Mix.Task
-  @shortdoc "`npm install` in web_dir" # + npm install server side dependencies"
+
+  @shortdoc "`npm install` in web_dir + npm install server side dependencies"
   def run(_args) do
     {_, 0} = System.cmd("npm", ["install"], into: IO.stream(:stdio, :line), cd: WebPack.Util.web_app)
     reaxt_js_root = Application.get_env(:reaxt, :reaxt_js_root, "reaxt")
@@ -17,7 +18,8 @@ end
 
 defmodule Mix.Tasks.Webpack.Analyseapp do
   use Mix.Task
-  @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versioned"
+
+  @shortdoc "Generate webpack stats analysing application, resulting priv/static is meant to be versionned"
   def run(_args) do
     File.rm_rf!("priv/static")
     {_,0} = System.cmd("git",["clone","-b","ajax-sse-loading","https://github.com/awetzel/analyse"], into: IO.stream(:stdio, :line))
@@ -30,19 +32,20 @@ end
 
 defmodule Mix.Tasks.Webpack.Compile do
   use Mix.Task
+
   @shortdoc "Compiles with Webpack"
   @webpack "./node_modules/webpack/bin/webpack.js"
   def run(_) do
     case compile() do
       {json, 0} ->
         File.write!("priv/webpack.stats.json", json)
-        :ok
+
       {ret, 2} ->
         require Logger
         ret
         |> Poison.decode!()
         |> Map.fetch!("errors")
-        |> Enum.map(&Logger.error/1)
+        |> Enum.each(&Logger.error/1)
         :error
     end
   end
