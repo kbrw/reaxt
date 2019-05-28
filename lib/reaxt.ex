@@ -50,7 +50,7 @@ defmodule Reaxt do
         case ex do
           %{js_render: js_render} when is_binary(js_render)->
             Logger.error(Exception.message(ex))
-            %{css: "",html: "",js_render: js_render}
+            %{css: "",html: "", js_render: js_render}
           _ ->
             reraise ex, System.stacktrace
         end
@@ -71,22 +71,18 @@ defmodule Reaxt do
   defmodule App do
     use Application
     def start(_,_) do
-      result = Supervisor.start_link(App.Sup,[],name: App.Sup)
+      result = Supervisor.start_link(App.Sup,[], name: App.Sup)
       WebPack.Util.build_stats
       result
     end
     defmodule Sup do
       use Supervisor
       def init([]) do
-        dev_workers =
-          if Application.get_env(:reaxt, :hot) do
-            [worker(WebPack.Compiler,[]), worker(WebPack.EventManager,[])]
-          else
-            []
-          end
-
-        supervisor = [Supervisor.Spec.supervisor(__MODULE__, [], function: :start_pools, id: :react)]
-        supervise(supervisor ++ dev_workers, strategy: :one_for_one)
+        dev_workers = if Application.get_env(:reaxt, :hot),
+           do: [worker(WebPack.Compiler,[]),
+                worker(WebPack.EventManager,[])], else: []
+        supervise([Supervisor.Spec.supervisor(__MODULE__,[],function: :start_pools,id: :react)
+          |dev_workers], strategy: :one_for_one)
       end
 
       def start_pools do
