@@ -76,11 +76,11 @@ defmodule WebPack.EventManager do
   end
 
   def handle_call({:wait?,_reply_to},%{compiling: false}=state), do:
-    {:ok, :nowait, state}
+    {:ok,:nowait,state}
   def handle_call({:wait?,reply_to},state), do:
     {:ok,:wait,%{state|pending: [reply_to|state.pending]}}
 
-  def handle_event(%{event: "client_done"} = ev, state) do
+  def handle_event(%{event: "client_done"}=ev,state) do
     Logger.info("[reaxt-webpack] client done, build_stats")
     WebPack.Util.build_stats
     if(!state.init) do
