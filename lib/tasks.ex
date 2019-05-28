@@ -51,8 +51,8 @@ defmodule Mix.Tasks.Webpack.Compile do
   end
 
   def compile() do
-    config = "./" <> WebPack.Util.webpack_config
-    System.cmd("node", [@webpack, "--config", config, "--json"], into: "", cd: WebPack.Util.web_app)
+    config = "./"<>WebPack.Util.webpack_config
+    System.cmd("node",[@webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
   end
 end
 
@@ -131,9 +131,8 @@ defmodule Mix.Tasks.Compile.ReaxtWebpack do
     #   end
     end
 
-    if !Application.get_env(:reaxt, :hot) do
+    if !Application.get_env(:reaxt,:hot), do:
       Mix.Task.run("webpack.compile", args)
-    end
 
     :ok
   end
