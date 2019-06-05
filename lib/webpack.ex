@@ -48,9 +48,10 @@ defmodule WebPack.Plug.Static do
     receive do {:gen_event_EXIT,_,_} -> halt(conn) end
   end
   get "/webpack/client.js" do
+    reaxt_js_root = Application.get_env(:reaxt, :reaxt_js_root, "reaxt")
     conn
     |> put_resp_content_type("application/javascript")
-    |> send_file(200,"#{WebPack.Util.web_app}/node_modules/reaxt/webpack_client.js")
+    |> send_file(200,"#{WebPack.Util.web_app}/node_modules/#{reaxt_js_root}/webpack_client.js")
     |> halt
   end
   match _, do: conn
@@ -120,7 +121,8 @@ end
 
 defmodule WebPack.Compiler do
   def start_link do
-    cmd = "node ./node_modules/reaxt/webpack_server #{WebPack.Util.webpack_config}"
+    reaxt_js_root = Application.get_env(:reaxt, :reaxt_js_root, "reaxt")
+    cmd = "node ./node_modules/#{reaxt_js_root}/webpack_server #{WebPack.Util.webpack_config}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],WebPack.Events)
   end
