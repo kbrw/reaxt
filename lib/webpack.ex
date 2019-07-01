@@ -88,7 +88,7 @@ defmodule WebPack.EventManager do
       {:ok,_} = Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
     if ev[:error] do
-      Logger.error("[rext-webpack] error compiling server_side JS #{ev[:error]}")
+      Logger.error("[reaxt-webpack] error compiling server_side JS #{ev[:error]}")
       if ev[:error] != "soft fail", do:
         System.halt(1)
     end
@@ -142,10 +142,17 @@ defmodule WebPack.Util do
     Application.get_env :reaxt, :web_app, "web"
   end
 
+  def parallel_build do
+    ## We can't have parallel AND hot reload together
+    Application.get_env(:reaxt, :hot, false) == false && Application.get_env(:reaxt, :parallel, false)
+  end
+
   def build_stats do
     if File.exists?("#{web_priv()}/webpack.stats.json") do
       all_stats = Poison.decode!(File.read!("#{web_priv()}/webpack.stats.json"))
-      stats = all_stats["children"] |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
+      #The format of the stats from parallel-webpack is different than the raw one from webpack
+      stats_array = if WebPack.Util.parallel_build, do: all_stats, else: all_stats["children"]
+      stats = stats_array |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
          {idx,%{assetsByChunkName: stats["assetsByChunkName"],
                 errors: stats["errors"],
                 warnings: stats["warnings"]}}
