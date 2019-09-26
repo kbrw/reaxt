@@ -89,7 +89,7 @@ defmodule WebPack.EventManager do
       {:ok,_} = Supervisor.restart_child(Reaxt.App.Sup,:react)
     end
     if ev[:error] do
-      Logger.error("[rext-webpack] error compiling server_side JS #{ev[:error]}")
+      Logger.error("[reaxt-webpack] error compiling server_side JS #{ev[:error]}")
       if ev[:error] != "soft fail", do:
         System.halt(1)
     end
