@@ -11,7 +11,7 @@ window.reaxt_render = function(module,submodule,props,param){
   submodule.reaxt_client_render = submodule.reaxt_client_render || default_client_render
   return function(elemid){ 
     submodule.reaxt_client_render(props,function(comp,args,callback){
-      ReactDOM.render(comp,document.getElementById(elemid),callback)
+      ReactDOM.hydrate(comp,document.getElementById(elemid),callback)
     },param)
   }
 }
