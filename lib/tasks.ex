@@ -128,5 +128,6 @@ defmodule Mix.Tasks.Compile.ReaxtWebpack do
 
     if !Application.get_env(:reaxt,:hot), do:
       Mix.Task.run("webpack.compile", args)
+    {:ok,[]}
   end
 end
