@@ -3,15 +3,15 @@ defmodule Reaxt.Mixfile do
 
   def project do
     [app: :reaxt,
-     version: "3.0.0",
+     version: "4.0.0",
      description: description(),
      package: package(),
-     elixir: ">= 1.0.0",
+     elixir: ">= 1.10.0",
      deps: deps()]
   end
 
   def application do
-    [applications: [:logger, :poolboy, :exos],
+    [applications: [:logger, :poolboy, :exos, :plug, :poison],
      mod: {Reaxt.App,[]},
      env: [
        otp_app: :reaxt, #the OTP application containing compiled JS server
@@ -24,11 +24,10 @@ defmodule Reaxt.Mixfile do
   end
 
   defp deps do
-    [{:exos, "1.0.0"},
+    [{:exos, "~> 2.0", github: "kbrw/exos", branch: "2.0.0-dev"},
      {:poolboy, "~> 1.5.0"},
-     {:cowboy,"~> 1.0.0"},
-     {:plug, "~> 1.0"},
-     {:poison,"~> 2.1.0"},
+     {:plug, "~> 1.10"},
+     {:poison,"~> 4.0"},
      {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 

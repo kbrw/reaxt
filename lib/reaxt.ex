@@ -36,7 +36,7 @@ defmodule Reaxt do
       {:error,err}->
         try do raise(ReaxtError,err)
         rescue ex->
-          [_|stack] = System.stacktrace
+          [_|stack] = __STACKTRACE__
           reraise ex, ((ex.js_stack || []) ++ stack)
         end
     end
@@ -52,15 +52,15 @@ defmodule Reaxt do
             Logger.error(Exception.message(ex))
             %{css: "",html: "", js_render: js_render}
           _ ->
-            reraise ex, System.stacktrace
+            reraise ex, __STACKTRACE__
         end
     end
   end
 
   def reload do
     WebPack.Util.build_stats
-    Supervisor.terminate_child(Reaxt.App.Sup,:react)
-    Supervisor.restart_child(Reaxt.App.Sup,:react)
+    Supervisor.terminate_child(Reaxt.App, Reaxt.App.PoolsSup)
+    Supervisor.restart_child(Reaxt.App, Reaxt.App.PoolsSup)
   end
 
   def start_link(server_path) do
@@ -71,21 +71,20 @@ defmodule Reaxt do
   defmodule App do
     use Application
     def start(_,_) do
-      result = Supervisor.start_link(App.Sup,[], name: App.Sup)
+      result = Supervisor.start_link(
+        [App.PoolsSup] ++ List.wrap(if Application.get_env(:reaxt,:hot) do [
+          WebPack.Compiler,
+          WebPack.Events,
+          WebPack.EventManager,
+          {WebPack.StartBlocker,:infinity}
+        ] end), name: __MODULE__, strategy: :one_for_one)
       WebPack.Util.build_stats
       result
     end
-    defmodule Sup do
+    defmodule PoolsSup do
       use Supervisor
-      def init([]) do
-        dev_workers = if Application.get_env(:reaxt,:hot),
-           do: [worker(WebPack.Compiler,[]),
-                worker(WebPack.EventManager,[])], else: []
-        supervise([Supervisor.Spec.supervisor(__MODULE__,[],function: :start_pools,id: :react)
-          |dev_workers], strategy: :one_for_one)
-      end
-
-      def start_pools do
+      def start_link(arg) do Supervisor.start_link(__MODULE__,arg, name: __MODULE__) end
+      def init(_) do
         pool_size = Application.get_env(:reaxt,:pool_size)
         pool_overflow = Application.get_env(:reaxt,:pool_max_overflow)
         server_dir = "#{WebPack.Util.web_priv}/#{Application.get_env(:reaxt,:server_dir)}"
@@ -94,7 +93,7 @@ defmodule Reaxt do
           Logger.error("#server JS not yet compiled in #{server_dir}, compile it before with `mix webpack.compile`")
           throw {:error,:serverjs_not_compiled}
         else
-          Supervisor.start_link(
+          Supervisor.init(
             for server<-server_files do
               pool = :"react_#{server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/,"_")}_pool"
               Pool.child_spec(pool,[worker_module: Reaxt,size: pool_size, max_overflow: pool_overflow, name: {:local,pool}], server)
