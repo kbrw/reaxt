@@ -86,15 +86,15 @@ defmodule WebPack.Plug.Static do
 end
 
 defmodule WebPack.StartBlocker do
-  use GenServer, restart: :temporary
   @moduledoc """
-  this Genserver blocks application start to ensure that when the next application start
+  this process blocks application start to ensure that when the next application starts
   the reaxt render is ready (js is compiled)
   """
-  def start_link(arg) do GenServer.start_link(__MODULE__,arg, name: __MODULE__) end
-  def init(timeout) do
-    :ok = GenServer.call(WebPack.EventManager,:wait?,timeout)
-    {:stop,:normal}
+  def child_spec(arg) do
+    %{id: __MODULE__, start: {__MODULE__, :start_link, [arg]}, restart: :temporary}
+  end
+  def start_link(timeout) do
+    {:ok,spawn_link(fn-> :ok = GenServer.call(WebPack.EventManager,:wait?,timeout) end)}
   end
 end
 
