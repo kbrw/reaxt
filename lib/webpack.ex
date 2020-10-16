@@ -192,6 +192,7 @@ defmodule WebPack.Util do
                 errors: stats["errors"],
                 warnings: stats["warnings"]}}
       end)
+      _ = Code.compiler_options(ignore_module_conflict: true)
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats
@@ -210,6 +211,7 @@ defmodule WebPack.Util do
         def header, do:
           "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
       end
+      _ = Code.compiler_options(ignore_module_conflict: false)
     end
   end
 end
