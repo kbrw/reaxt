@@ -24,7 +24,7 @@ defmodule Reaxt.Mixfile do
   end
 
   defp deps do
-    [{:exos, "~> 2.0", github: "kbrw/exos", branch: "2.0.0-dev"},
+    [{:exos, "~> 2.0"},
      {:poolboy, "~> 1.5.0"},
      {:plug, "~> 1.10"},
      {:poison,"~> 4.0"},
