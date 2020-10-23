@@ -93,8 +93,10 @@ defmodule WebPack.StartBlocker do
   def child_spec(arg) do
     %{id: __MODULE__, start: {__MODULE__, :start_link, [arg]}, restart: :temporary}
   end
-  def start_link(timeout) do
-    {:ok,spawn_link(fn-> :ok = GenServer.call(WebPack.EventManager,:wait?,timeout) end)}
+  def start_link(timeout) do :proc_lib.start_link(__MODULE__,:wait, [timeout]) end
+  def wait(timeout) do
+    :ok = GenServer.call(WebPack.EventManager,:wait?,timeout)
+    :proc_lib.init_ack({:ok,self()})
   end
 end
 
@@ -104,6 +106,7 @@ defmodule WebPack.EventManager do
   def start_link(_) do GenServer.start_link(__MODULE__,[], name: __MODULE__) end
 
   def init([]) do
+    WebPack.Events.register!()
     {:ok,%{init: true,pending: [], compiling: false, compiled: false}}
   end
 
@@ -130,17 +133,17 @@ defmodule WebPack.EventManager do
     {:noreply,done(state)}
   end
 
-  def handle_event(%{event: "client_invalid"},%{compiling: false}=state) do
+  def handle_info({:event,%{event: "client_invalid"}},%{compiling: false}=state) do
     Logger.info("[reaxt-webpack] detect client file change")
-    {:ok,%{state|compiling: true, compiled: false}}
+    {:noreply,%{state|compiling: true, compiled: false}}
   end
-  def handle_event(%{event: "done"},state) do
+  def handle_info({:event,%{event: "done"}},state) do
     Logger.info("[reaxt-webpack] both done !")
-    {:ok,state}
+    {:noreply,state}
   end
-  def handle_event(ev,state) do
+  def handle_info({:event,ev},state) do
     Logger.info("[reaxt-webpack] event : #{ev[:event]}")
-    {:ok,state}
+    {:noreply,state}
   end
 
   def done(state) do
@@ -187,20 +190,17 @@ defmodule WebPack.Util do
       all_stats = Poison.decode!(File.read!("#{web_priv()}/webpack.stats.json"))
       #The format of the stats from parallel-webpack is different than the raw one from webpack
       stats_array = if WebPack.Util.parallel_build, do: all_stats, else: all_stats["children"]
-      stats = stats_array |> Enum.with_index |> Enum.into(%{},fn {stats,idx}->
-         {idx,%{assetsByChunkName: stats["assetsByChunkName"],
-                errors: stats["errors"],
-                warnings: stats["warnings"]}}
+      stats = Enum.map(stats_array,fn stats->
+         %{assetsByChunkName: stats["assetsByChunkName"],
+           errors: stats["errors"],
+           warnings: stats["warnings"]}
       end)
       _ = Code.compiler_options(ignore_module_conflict: true)
       defmodule Elixir.WebPack do
         @stats stats
         def stats, do: @stats
         def file_of(name) do
-          r = Enum.find_value(WebPack.stats,
-            fn {_,%{assetsByChunkName: assets}}->
-              assets["#{name}"]
-            end)
+          r = Enum.find_value(WebPack.stats, fn %{assetsByChunkName: assets}-> assets["#{name}"] end)
           case r do
             [f|_]->f
             f -> f

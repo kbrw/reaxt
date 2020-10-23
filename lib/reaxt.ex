@@ -73,10 +73,10 @@ defmodule Reaxt do
     def start(_,_) do
       result = Supervisor.start_link(
         [App.PoolsSup] ++ List.wrap(if Application.get_env(:reaxt,:hot) do [
-          WebPack.Compiler,
           WebPack.Events,
           WebPack.EventManager,
-          {WebPack.StartBlocker,:infinity}
+          WebPack.Compiler,
+          #{WebPack.StartBlocker,:infinity} # choice : wait for build or "mix webpack.compile" before launch
         ] end), name: __MODULE__, strategy: :one_for_one)
       WebPack.Util.build_stats
       result

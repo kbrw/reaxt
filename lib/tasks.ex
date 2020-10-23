@@ -37,13 +37,13 @@ defmodule Mix.Tasks.Webpack.Compile do
       {json, 0} ->
         File.write!("priv/webpack.stats.json", json)
 
-      {ret, 2} ->
+      {ret, x} when x in [1,2] ->
         require Logger
         ret
         |> Poison.decode!()
         |> Map.fetch!("errors")
         |> Enum.map(&Logger.error/1)
-        :error
+        {:error,[]}
     end
   end
 
