@@ -9,6 +9,13 @@ function safe_stringify(props){
   return JSON.stringify(props)
          .replace(/<\/script/g, '<\\/script')
          .replace(/<!--/g, '<\\!--')
+    .replace(/[<>\/\u2028\u2029]/g, function(c) {
+      if (c === '<') {  return '\\u003C' }
+      if (c === '>') {  return '\\u003E' }
+      if (c === '/') {  return '\\u002F' }
+      if (c === '\u2028') { return '\\u2028' }
+      if (c === '\u2029') { return '\\u2029' }
+    })
 }
 
 function rendering(component,module,submodule,param){
