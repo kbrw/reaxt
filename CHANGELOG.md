@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. (Hopefully I won't forget much.)
+All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
@@ -26,6 +26,17 @@ All notable changes to this project will be documented in this file. (Hopefully 
 
 * Updated escaping of the javascript returned to Elixir.
 
+## v0.3.2 - 2015-10-01
+
+### FIX
+
+* Depencency API change in elixir 1.1.0
+
+## v0.3.0 - 2015-07-11
+
+### Change
+
+* Breaking: added a third parameter `timeout` to render
 
 Changelog format inspired by [keep-a-changelog]
 
