@@ -42,7 +42,10 @@ defmodule Mix.Tasks.Webpack.Compile do
         ret
         |> Poison.decode!()
         |> Map.fetch!("errors")
-        |> Enum.map(&Logger.error/1)
+        |> Enum.map(fn
+          bin when is_binary(bin) -> Logger.error(bin)
+          %{"message" => bin} when is_binary(bin) -> Logger.error(bin)
+        end)
         {:error,[]}
     end
   end

@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 * Added this changelog file.
 
+### Changed
+
+* Updated webpack error messages handling
+
 ## [4.0.1] - 2021-12-21
 
 ### Changed
@@ -18,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-* Breaking : upgraded targeted Elixir version to from 1.0 to 1.10
+* Breaking : upgraded targeted Elixir version from 1.0 to 1.10
 * Breaking : upgraded Webpack version from 3.3.0 to 5.1.3
 * Moved out of GenEvent
 
