@@ -1,7 +1,7 @@
-var Server = require('node_erlastic').server,
+var Server = require('@kbrw/node_erlastic').server,
     ReactDOMServer = require("react-dom/server"),
     React = require("react"),
-	Bert = require('node_erlastic/bert'),
+       Bert = require('@kbrw/node_erlastic/bert'),
     Domain = require('domain')
 Bert.all_binaries_as_string = true
 

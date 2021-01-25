@@ -1,6 +1,6 @@
 var webpack = require("webpack"), 
-    port = require('node_erlastic').port,
-    server = require('node_erlastic').server
+    port = require('@kbrw/node_erlastic').port,
+    server = require('@kbrw/node_erlastic').server
 
 var client_config = require("./server.webpack.config.js")
 var client_compiler = webpack(client_config)
