@@ -125,8 +125,13 @@ defmodule WebPack.EventManager do
     end
     if ev[:error] do
       Logger.error("[reaxt-webpack] error compiling server_side JS #{ev[:error]}")
-      if ev[:error] != "soft fail", do:
-        System.halt(1)
+
+      Enum.each(Map.fetch!(ev.error_details, :errors), fn
+        bin when is_binary(bin) -> Logger.error(bin)
+        %{message: bin} when is_binary(bin) -> Logger.error(bin)
+      end)
+
+      if ev[:error] != "soft fail", do: System.halt(1)
     end
     for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warn(error)
     for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warn(warning)

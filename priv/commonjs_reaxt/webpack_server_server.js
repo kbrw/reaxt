@@ -8,7 +8,7 @@ var client_compiler = webpack(client_config)
 var client_stats,client_err
 function maybe_done() {
   if(client_err) port.write({event: "server_done", error: JSON.stringify(client_err)})
-  else if(client_stats.hasErrors()) port.write({event: "server_done", error: "soft fail"})
+  else if(client_stats.hasErrors()) port.write({event: "server_done", error: "soft fail", error_details: client_stats.toJson('errors-warnings')})
   else    port.write({event: "server_done"})
 }
 

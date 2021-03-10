@@ -16,7 +16,7 @@ var multi_config = require(process.cwd()+"/"+process.argv[2])
 var client_stats,client_err
 function maybe_done() {
   if(client_err) port.write({event: "client_done", error: JSON.stringify(client_err)})
-  else if(client_stats.hasErrors()) port.write({event: "client_done", error: "soft fail"})
+  else if(client_stats.hasErrors()) port.write({event: "client_done", error: "soft fail", error_details: client_stats.toJson('errors-warnings')})
   else    port.write({event: "client_done"})
 }
 
