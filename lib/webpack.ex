@@ -123,15 +123,17 @@ defmodule WebPack.EventManager do
       :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.App.PoolsSup)
       {:ok,_} = Supervisor.restart_child(Reaxt.App, Reaxt.App.PoolsSup)
     end
-    if ev[:error] do
-      Logger.error("[reaxt-webpack] error compiling server_side JS #{ev[:error]}")
+    _ = case ev do
+      %{error: "soft fail", error_details: details} ->
+        _ = Logger.error("[reaxt-webpack] soft fail compiling server_side JS")
+        _ = Enum.each(details.errors, fn
+          bin when is_binary(bin) -> Logger.error(bin)
+          %{message: bin} when is_binary(bin) -> Logger.error(bin)
+        end)
 
-      Enum.each(Map.fetch!(ev.error_details, :errors), fn
-        bin when is_binary(bin) -> Logger.error(bin)
-        %{message: bin} when is_binary(bin) -> Logger.error(bin)
-      end)
-
-      if ev[:error] != "soft fail", do: System.halt(1)
+      %{error: other} ->
+        _ = Logger.error("[reaxt-webpack] error compiling server_side JS : #{other}")
+        _ = System.halt(1)
     end
     for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warn(error)
     for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warn(warning)
