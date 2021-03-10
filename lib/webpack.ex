@@ -134,6 +134,8 @@ defmodule WebPack.EventManager do
       %{error: other} ->
         _ = Logger.error("[reaxt-webpack] error compiling server_side JS : #{other}")
         _ = System.halt(1)
+
+      _ -> :ok
     end
     for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warn(error)
     for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warn(warning)
