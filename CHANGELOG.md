@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 * Updated webpack error messages handling
+* More detailed Reaxt errors
 * Js: updated `node_erlastic` deps to kbrw's scoped version
 
 ## [4.0.1] - 2021-12-21

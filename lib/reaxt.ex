@@ -1,10 +1,15 @@
 defmodule ReaxtError do
-  defexception [:message,:js_render,:js_stack]
-  def exception({:handler_error,error,stack}) do
-    %ReaxtError{message: "JS Exception : #{error}", js_stack: (stack && parse_stack(stack))}
+  defexception [:message,:args,:js_render,:js_stack]
+  def exception({:handler_error,module,submodule,args,error,stack}) do
+    params=%{
+      module: module,
+      submodule: submodule,
+      args: args
+    }
+    %ReaxtError{message: "JS Handler Exception for #{inspect params}: #{error}", args: params, js_stack: (stack && parse_stack(stack))}
   end
-  def exception({:render_error,error,stack,js_render}) do
-    %ReaxtError{message: "JS Exception : #{error}", js_render: js_render, js_stack: (stack && parse_stack(stack))}
+  def exception({:render_error,params,error,stack,js_render}) do
+    %ReaxtError{message: "JS Render Exception : #{error}", args: params, js_render: js_render, js_stack: (stack && parse_stack(stack))}
   end
   defp parse_stack(stack) do
     Regex.scan(~r/at (.*) \((.*):([0-9]*):[0-9]*\)/,stack)

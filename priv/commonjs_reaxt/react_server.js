@@ -33,6 +33,7 @@ function rendering(component,module,submodule,param){
              Bert.atom("error"),
                Bert.tuple(
                  Bert.atom("render_error"),
+                 render_params,
                  error.toString(),
                  (error.stack && error.stack || Bert.atom("nil")),
                  js_render ))
@@ -53,7 +54,7 @@ Server(function(term,from,state,done){
   var module=term[1].toString(), submodule=term[2].toString(), args=term[3], timeout=term[4]
 
   var timeout_handler = setTimeout(function(){
-    done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(Bert.atom("handler_error"),"timeout",Bert.atom("nil"))))
+    done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(Bert.atom("handler_error"),module,submodule,args,"timeout",Bert.atom("nil"))))
   },timeout)
 
   import(`./../../components/${module}`).then((handler)=>{
@@ -75,6 +76,9 @@ Server(function(term,from,state,done){
     clearTimeout(timeout_handler)
     done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(
       Bert.atom("handler_error"),
+      module,
+      submodule,
+      args,
       error.toString(), 
       (error.stack && error.stack || Bert.atom("nil"))
     )))
@@ -82,6 +86,9 @@ Server(function(term,from,state,done){
     clearTimeout(timeout_handler)
     done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(
       Bert.atom("handler_error"),
+      module,
+      submodule,
+      args,
       error.toString(), 
       (error.stack && error.stack || Bert.atom("nil"))
     )))
