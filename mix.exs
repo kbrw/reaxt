@@ -3,7 +3,7 @@ defmodule Reaxt.Mixfile do
 
   def project do
     [app: :reaxt,
-     version: "4.0.1",
+     version: "4.0.2-rc.1",
      description: description(),
      package: package(),
      elixir: ">= 1.10.0",

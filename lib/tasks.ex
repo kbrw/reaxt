@@ -29,7 +29,6 @@ defmodule Mix.Tasks.Webpack.Compile do
   use Mix.Task
 
   @shortdoc "Compiles Webpack"
-  @webpack_parallel"./node_modules/parallel-webpack/bin/run.js"
   @webpack "./node_modules/webpack/bin/webpack.js"
 
   def run(_) do
@@ -52,7 +51,7 @@ defmodule Mix.Tasks.Webpack.Compile do
 
   def compile() do
     config = "./"<>WebPack.Util.webpack_config
-    webpack = if WebPack.Util.parallel_build, do: @webpack_parallel, else: @webpack
+    webpack = @webpack
     System.cmd("node",[webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
   end
 end
