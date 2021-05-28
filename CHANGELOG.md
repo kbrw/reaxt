@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [4.0.2] - 2021-05-28
+
 ### Added
 
 * Added this changelog file.
@@ -14,7 +16,11 @@ All notable changes to this project will be documented in this file.
 * More detailed Reaxt errors
 * Js: updated `node_erlastic` deps to kbrw's scoped version
 
-## [4.0.1] - 2021-12-21
+### FIX
+
+ * Removed `parallel-webpack` as it doesn't build with webpack 5
+
+## [4.0.1] - 2020-12-21
 
 ### Changed
 
@@ -62,6 +68,7 @@ Changelog format inspired by [keep-a-changelog]
 
 [keep-a-changelog]: https://github.com/olivierlacan/keep-a-changelog
 [unreleased]: https://github.com/kbrw/reaxt/compare/v4.0.1...HEAD
+[4.0.2]: https://github.com/kbrw/reaxt/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/kbrw/reaxt/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/kbrw/reaxt/compare/v3.0.0...v4.0.0
 [3.0.1]: https://github.com/kbrw/reaxt/compare/v3.0.0...v3.0.1

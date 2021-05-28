@@ -1,13 +1,25 @@
 defmodule Reaxt.Mixfile do
   use Mix.Project
 
+  def version, do: "0.4.0"
+
+  defp description do
+    """
+    Use your react components into your elixir application, using webpack compilation.
+    """
+  end
+
   def project do
-    [app: :reaxt,
-     version: "4.0.2-rc.1",
-     description: description(),
-     package: package(),
-     elixir: ">= 1.10.0",
-     deps: deps()]
+    [
+      app: :reaxt,
+      version: version(),
+      description: description(),
+      package: package(),
+      elixir: ">= 1.10.0",
+      deps: deps(),
+      docs: docs(),
+      source_url: git_repository(),
+    ]
   end
 
   def application do
@@ -28,18 +40,34 @@ defmodule Reaxt.Mixfile do
      {:poolboy, "~> 1.5.0"},
      {:plug, "~> 1.10"},
      {:poison,"~> 4.0"},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+     {:ex_doc, "~> 0.24", only: :dev, runtime: false}]
   end
 
   defp package do
-    [ maintainers: ["Arnaud Wetzel"],
+    [
       licenses: ["The MIT License (MIT)"],
-      links: %{ "GitHub"=>"https://github.com/awetzel/reaxt"} ]
+      links: %{
+        "GitHub" => git_repository(),
+        "Changelog" => "https://hexdocs.pm/reaxt/changelog.html",
+      },
+      maintainers: ["Arnaud Wetzel"],
+    ]
   end
 
-  defp description do
-    """
-    Use your react components into your elixir application, using webpack compilation.
-    """
+  def docs do
+    [
+      extras: [
+        "CHANGELOG.md": [title: "Changelog"],
+        "README.md": [title: "Overview"],
+      ],
+      api_reference: false,
+      main: "readme",
+      source_url: git_repository(),
+      source_ref: "v#{version()}",
+    ]
+  end
+
+  defp git_repository do
+    "https://github.com/kbrw/reaxt"
   end
 end
