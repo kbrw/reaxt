@@ -116,7 +116,10 @@ defmodule Mix.Tasks.Reaxt.Validate do
 end
 
 defmodule Mix.Tasks.Compile.ReaxtWebpack do
+  use Mix.Task.Compiler
+
   def run(args) do
+    IO.puts("[Reaxt] Running compiler...")
     Mix.Task.run("reaxt.validate", args ++ ["--reaxt-skip-compiler-check"])
 
     if !File.exists?(Path.join(WebPack.Util.web_app, "node_modules")) do
