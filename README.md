@@ -253,3 +253,9 @@ can use `process.env.MIX_ENV` in your webpack config.
   })()
 }
 ```
+
+# CONTRIBUTING
+
+Hi, and thank you for wanting to contribute.
+Please refer to the centralized informations available at: https://github.com/kbrw#contributing
+
