@@ -35,6 +35,7 @@ defmodule Mix.Tasks.Webpack.Compile do
     case compile() do
       {json, 0} ->
         File.write!("priv/webpack.stats.json", json)
+        {:ok, []}
 
       {ret, x} when x in [1,2] ->
         require Logger
@@ -133,6 +134,5 @@ defmodule Mix.Tasks.Compile.ReaxtWebpack do
 
     if !Application.get_env(:reaxt,:hot), do:
       Mix.Task.run("webpack.compile", args)
-    {:ok,[]}
   end
 end
