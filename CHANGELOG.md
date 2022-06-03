@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+* Updated poolboy, it itself now uses rebar3 to build.
+
 ## [4.0.2] - 2021-05-28
 
 ### Added
