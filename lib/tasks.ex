@@ -53,7 +53,13 @@ defmodule Mix.Tasks.Webpack.Compile do
   def compile() do
     config = "./"<>WebPack.Util.webpack_config
     webpack = @webpack
-    System.cmd("node",[webpack,"--config",config,"--json"], into: "", cd: WebPack.Util.web_app)
+    System.cmd(
+      "node",
+      [webpack, "--config", config, "--json"],
+      into: "",
+      cd: WebPack.Util.web_app(),
+      env: [{"MIX_ENV", Mix.env()}]
+    )
   end
 end
 
