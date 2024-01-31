@@ -58,7 +58,7 @@ defmodule Mix.Tasks.Webpack.Compile do
       [webpack, "--config", config, "--json"],
       into: "",
       cd: WebPack.Util.web_app(),
-      env: [{"MIX_ENV", Mix.env()}]
+      env: [{"MIX_ENV", "#{Mix.env()}"}]
     )
   end
 end
