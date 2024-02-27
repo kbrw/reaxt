@@ -15,7 +15,7 @@ defmodule Reaxt.Mixfile do
       version: version(),
       description: description(),
       package: package(),
-      elixir: ">= 1.10.0",
+      elixir: "~> 1.12",
       deps: deps(),
       docs: docs(),
       source_url: git_repository(),
@@ -37,10 +37,10 @@ defmodule Reaxt.Mixfile do
 
   defp deps do
     [{:exos, "~> 2.0"},
-     {:poolboy, "~> 1.5.0"},
-     {:plug, "~> 1.10"},
-     {:poison,"~> 4.0"},
-     {:ex_doc, "~> 0.24", only: :dev, runtime: false}]
+     {:poolboy, "~> 1.5"},
+     {:plug, "~> 1.15"},
+     {:poison,"~> 5.0"},
+     {:ex_doc, "~> 0.31", only: :dev, runtime: false}]
   end
 
   defp package do
