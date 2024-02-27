@@ -137,8 +137,8 @@ defmodule WebPack.EventManager do
 
       _ -> :ok
     end
-    for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warn(error)
-    for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warn(warning)
+    for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warning(error)
+    for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warning(warning)
     {:noreply,done(state)}
   end
 
