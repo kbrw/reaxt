@@ -138,7 +138,10 @@ defmodule Mix.Tasks.Compile.ReaxtWebpack do
         Mix.Task.run("npm.install", args)
     end
 
-    if !Application.get_env(:reaxt,:hot), do:
+    if !Application.get_env(:reaxt,:hot) do
       Mix.Task.run("webpack.compile", args)
+    else
+      {:ok, []}
+    end
   end
 end
