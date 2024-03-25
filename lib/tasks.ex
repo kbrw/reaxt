@@ -94,13 +94,14 @@ defmodule Mix.Tasks.Reaxt.Validate do
 
                 """
 
-    if Poison.decode!(File.read!(packageJsonPath))["dependencies"]["webpack"] == nil, do:
+    packageJson = Poison.decode!(File.read!(packageJsonPath))
+    if packageJson["devDependencies"]["webpack"] == nil, do:
       Mix.raise """
-                Reaxt requires webpack as a dependency in #{packageJsonPath}.
+                Reaxt requires webpack as a devDependency in #{packageJsonPath}.
                 Add a dependency to 'webpack' like:
 
                   {
-                    dependencies: {
+                    devDependencies: {
                       "webpack": "^1.4.13"
                     }
                   }
