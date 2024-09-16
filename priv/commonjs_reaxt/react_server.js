@@ -65,7 +65,7 @@ Server(function(term,from,state,done){
     handler.reaxt_server_render = handler.reaxt_server_render || default_server_render
     current_ref++
     return (function(ref){
-      return handler.reaxt_server_render(args,function(component,param,callback){
+      return handler.reaxt_server_render(args,function(component,param){
         clearTimeout(timeout_handler)
         if(ref === current_ref){
           done("reply",rendering(component,module,submodule,param))
