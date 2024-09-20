@@ -63,7 +63,7 @@ defmodule WebPack.Plug.Static do
   get "/webpack/stats.json" do
     conn
     |> put_resp_content_type("application/json")
-    |> send_file(200,"#{WebPack.Util.web_priv}/webpack.stats.json")
+    |> send_file(200,"#{Reaxt.Utils.web_priv}/webpack.stats.json")
     |> halt
   end
   get "/webpack", do: %{conn|path_info: ["webpack","static","index.html"]}
@@ -78,7 +78,7 @@ defmodule WebPack.Plug.Static do
   get "/webpack/client.js" do
     conn
     |> put_resp_content_type("application/javascript")
-    |> send_file(200,"#{WebPack.Util.web_app}/node_modules/reaxt/webpack_client.js")
+    |> send_file(200,"#{Reaxt.Utils.web_app}/node_modules/reaxt/webpack_client.js")
     |> halt
   end
   match _, do: conn
@@ -120,8 +120,8 @@ defmodule WebPack.EventManager do
     WebPack.Util.build_stats
     if(!state.init) do
       Logger.info("[reaxt-webpack] client done, restart servers")
-      :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.App.PoolsSup)
-      {:ok,_} = Supervisor.restart_child(Reaxt.App, Reaxt.App.PoolsSup)
+      :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.PoolsSup)
+      {:ok,_} = Supervisor.restart_child(Reaxt.App, Reaxt.PoolsSup)
     end
     _ = case ev do
       %{error: "soft fail", error_details: details} ->
@@ -169,7 +169,7 @@ defmodule WebPack.Compiler do
   def start_link(_) do
     cmd = "node ./node_modules/reaxt/webpack_server #{WebPack.Util.webpack_config}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],&WebPack.Events.dispatch/1)
+    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: Reaxt.Utils.web_app],[name: __MODULE__],&WebPack.Events.dispatch/1)
   end
 end
 
@@ -178,20 +178,9 @@ defmodule WebPack.Util do
     Application.get_env(:reaxt,:webpack_config,"webpack.config.js")
   end
 
-  def web_priv do
-    case Application.get_env :reaxt, :otp_app, :no_app_specified do
-      :no_app_specified -> :no_app_specified
-      web_app -> :code.priv_dir(web_app)
-    end
-  end
-
-  def web_app do
-    Application.get_env :reaxt, :web_app, "web"
-  end
-
   def build_stats do
-    if File.exists?("#{web_priv()}/webpack.stats.json") do
-      all_stats = Poison.decode!(File.read!("#{web_priv()}/webpack.stats.json"))
+    if File.exists?("#{Reaxt.Utils.web_priv()}/webpack.stats.json") do
+      all_stats = Poison.decode!(File.read!("#{Reaxt.Utils.web_priv()}/webpack.stats.json"))
       stats_array = all_stats["children"]
       stats = Enum.map(stats_array,fn stats->
          %{assetsByChunkName: stats["assetsByChunkName"],
