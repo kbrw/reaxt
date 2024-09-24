@@ -5,30 +5,30 @@ defmodule Mix.Tasks.Esbuild.Compile do
   @esbuild "./node_modules/esbuild/bin/esbuild.js"
 
   def run(_) do
-    case compile() do
-      {json, 0} ->
-        File.write!("priv/webpack.stats.json", json)
-        {:ok, []}
+    compile()
+    # case compile() do
+    #   {json, 0} ->
+    #     File.write!("priv/webpack.stats.json", json)
+    #     {:ok, []}
 
-      {ret, x} when x in [1,2] ->
-        require Logger
-        ret
-        |> Poison.decode!()
-        |> Map.fetch!("errors")
-        |> Enum.map(fn
-          bin when is_binary(bin) -> Logger.error(bin)
-          %{"message" => bin} when is_binary(bin) -> Logger.error(bin)
-        end)
-        {:error,[]}
-    end
+    #   {ret, x} when x in [1,2] ->
+    #     require Logger
+    #     ret
+    #     |> Poison.decode!()
+    #     |> Map.fetch!("errors")
+    #     |> Enum.map(fn
+    #       bin when is_binary(bin) -> Logger.error(bin)
+    #       %{"message" => bin} when is_binary(bin) -> Logger.error(bin)
+    #     end)
+    #     {:error,[]}
+    # end
   end
 
   def compile() do
     config = "./" <> Reaxt.Esbuild.esbuild_config()
-    esbuild = @esbuild
     System.cmd(
       "node",
-      [esbuild, "--config", config, "--json"],
+      [config],
       into: "",
       cd: Reaxt.Utils.web_app(),
       env: [{"MIX_ENV", "#{Mix.env()}"}]

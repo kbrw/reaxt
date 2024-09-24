@@ -17,10 +17,10 @@ defmodule Reaxt.Render do
         res
       {:error, err} ->
         try do
-          raise(Reaxt.Error, err)
+          raise(ReaxtError, err)
         rescue ex ->
           [_ | stack] = __STACKTRACE__
-          stack = List.wrap(ex.js_stack) |> Enum.concat(stack)
+          # stack = List.wrap(ex[:js_stack]) |> Enum.concat(stack)
           reraise ex, stack
         end
     end
@@ -42,7 +42,7 @@ defmodule Reaxt.Render do
   end
 
   def reload do
-    WebPack.Util.build_stats
+    if Reaxt.Utils.is_webpack?(), do: WebPack.Util.build_stats
     :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.PoolsSup)
     Supervisor.restart_child(Reaxt.App, Reaxt.PoolsSup)
   end

@@ -13,9 +13,9 @@ defmodule Reaxt.PoolsSup do
   end
 
   def init(_) do
-    pool_size = Application.get_env(:reaxt, :pool_size, 1)
-    pool_overflow = Application.get_env(:reaxt, :pool_max_overflow, 5)
-    server_dir = "#{Reaxt.Utils.web_priv}/#{Application.get_env(:reaxt, :server_dir)}"
+    pool_size = Reaxt.Utils.pool_size()
+    pool_overflow = Reaxt.Utils.max_pool_overflow()
+    server_dir = "#{Reaxt.Utils.web_priv()}/#{Reaxt.Utils.server_dir()}"
     server_files = Path.wildcard("#{server_dir}/*.js")
 
     if server_files == [] do

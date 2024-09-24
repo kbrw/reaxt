@@ -1,7 +1,7 @@
 defmodule Reaxt.Mixfile do
   use Mix.Project
 
-  def version, do: "4.1.0"
+  def version, do: "5.0.0"
 
   defp description do
     """
@@ -28,10 +28,6 @@ defmodule Reaxt.Mixfile do
      env: [
        otp_app: :reaxt, #the OTP application containing compiled JS server
        hot: false, # false | true | :client hot compilation and loading
-       pool_size: 1, #pool size of react renderes
-       webpack_config: "webpack.config.js",
-       server_dir: "react_servers",
-       pool_max_overflow: 5 #maximum pool extension when the pool is full
      ]]
   end
 

@@ -1,4 +1,4 @@
-defmodule Reaxt.Error do
+defmodule ReaxtError do
   defexception [:message,:args,:js_render,:js_stack]
 
   def exception({:handler_error,module,submodule,args,error,stack}) do
@@ -7,11 +7,14 @@ defmodule Reaxt.Error do
       submodule: submodule,
       args: args
     }
-    %__MODULE__{message: "JS Handler Exception for #{inspect params}: #{error}", args: params, js_stack: (stack && parse_stack(stack))}
+    %ReaxtError{message: "JS Handler Exception for #{inspect params}: #{error}", args: params, js_stack: (stack && parse_stack(stack))}
   end
 
   def exception({:render_error,params,error,stack,js_render}) do
-    %__MODULE__{message: "JS Render Exception : #{error}", args: params, js_render: js_render, js_stack: (stack && parse_stack(stack))}
+    %ReaxtError{message: "JS Render Exception : #{error}", args: params, js_render: js_render, js_stack: (stack && parse_stack(stack))}
+  end
+  def exception(rest) do
+    %ReaxtError{message: "JS Render Exception : #{inspect(rest)}", args: "", js_render: "", js_stack: ""}
   end
 
   defp parse_stack(stack) do
