@@ -1,4 +1,4 @@
-defmodule WebPack.Events do
+defmodule WebPack.Hot.Events do
   def child_spec(_) do
     Registry.child_spec(keys: :duplicate, name: __MODULE__)
   end
@@ -48,7 +48,7 @@ defmodule WebPack.Plug.Static do
   def wait_compilation(conn,_) do
     if Application.get_env(:reaxt,:hot) do
       try do
-        :ok = GenServer.call(WebPack.EventManager,:wait?,30_000)
+        :ok = GenServer.call(WebPack.Hot.EventManager,:wait?,30_000)
       catch
         :exit,{:timeout,_} -> :ok
       end
@@ -71,9 +71,9 @@ defmodule WebPack.Plug.Static do
     conn=conn
         |> put_resp_header("content-type", "text/event-stream")
         |> send_chunked(200)
-    hot? = Application.get_env(:reaxt,:hot)
+    hot? = Reaxt.Utils.is_hot?()
     if hot? == :client, do: chunk(conn, "event: hot\ndata: nothing\n\n")
-    if hot? do WebPack.Events.stream_chunks(conn) else conn end
+    if hot? do WebPack.Hot.Events.stream_chunks(conn) else conn end
   end
   get "/webpack/client.js" do
     conn
@@ -100,13 +100,13 @@ defmodule WebPack.StartBlocker do
   end
 end
 
-defmodule WebPack.EventManager do
+defmodule WebPack.Hot.EventManager do
   use GenServer
   require Logger
   def start_link(_) do GenServer.start_link(__MODULE__,[], name: __MODULE__) end
 
   def init([]) do
-    WebPack.Events.register!()
+    WebPack.Hot.Events.register!()
     {:ok,%{init: true,pending: [], compiling: false, compiled: false}}
   end
 
@@ -157,19 +157,19 @@ defmodule WebPack.EventManager do
 
   def done(state) do
     for from<-state.pending do GenServer.reply(from,:ok) end
-    WebPack.Events.dispatch(%{event: "done"})
+    WebPack.Hot.Events.dispatch(%{event: "done"})
     %{state| pending: [], init: false, compiling: false, compiled: true}
   end
 end
 
-defmodule WebPack.Compiler do
+defmodule WebPack.Hot.Compiler do
   def child_spec(arg) do
     %{id: __MODULE__, start: {__MODULE__, :start_link, [arg]} }
   end
   def start_link(_) do
-    cmd = "node ./node_modules/reaxt/webpack_server #{WebPack.Util.webpack_config}"
+    cmd = "node ./node_modules/reaxt/webpack_hot_server #{WebPack.Util.webpack_config}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: Reaxt.Utils.web_app],[name: __MODULE__],&WebPack.Events.dispatch/1)
+    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: Reaxt.Utils.web_app],[name: __MODULE__],&WebPack.Hot.Events.dispatch/1)
   end
 end
 

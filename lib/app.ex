@@ -1,26 +1,36 @@
 defmodule Reaxt.App do
   use Application
+  require Logger
 
   def start(_,_) do
-    hot_reload_processes = [
-      # WebPack.Events,
-      # WebPack.EventManager,
-      # WebPack.Compiler,
-    ]
+    hot_reload_processes = if Reaxt.Utils.is_hot?() do
+      hot_processes(Reaxt.Utils.bundler)
+    else
+      []
+    end
 
     base_processes = [
       Reaxt.PoolsSup
     ]
 
-    children = if Application.get_env(:reaxt, :hot, false) do
-      Enum.concat(base_processes, hot_reload_processes)
-    else
-      base_processes
-    end
+    children = Enum.concat(base_processes, hot_reload_processes)
 
     result = Supervisor.start_link(children, name: __MODULE__, strategy: :one_for_one)
     # WebPack.Util.build_stats()
 
     result
+  end
+
+  def hot_processes(:webpack) do
+    [
+      WebPack.Hot.Events,
+      WebPack.Hot.EventManager,
+      WebPack.Hot.Compiler,
+    ]
+  end
+
+  def hot_processes(_) do
+    Logger.warning("[Reaxt] Hot reload is not supported for bundle #{inspect Reaxt.Utils.bundler()}")
+    []
   end
 end

@@ -2,26 +2,10 @@ defmodule Mix.Tasks.Esbuild.Compile do
   use Mix.Task
 
   @shortdoc "Compiles Esbuild"
-  @esbuild "./node_modules/esbuild/bin/esbuild.js"
 
   def run(_) do
-    compile()
-    # case compile() do
-    #   {json, 0} ->
-    #     File.write!("priv/webpack.stats.json", json)
-    #     {:ok, []}
-
-    #   {ret, x} when x in [1,2] ->
-    #     require Logger
-    #     ret
-    #     |> Poison.decode!()
-    #     |> Map.fetch!("errors")
-    #     |> Enum.map(fn
-    #       bin when is_binary(bin) -> Logger.error(bin)
-    #       %{"message" => bin} when is_binary(bin) -> Logger.error(bin)
-    #     end)
-    #     {:error,[]}
-    # end
+    {_logs, 0} = compile()
+    :ok
   end
 
   def compile() do

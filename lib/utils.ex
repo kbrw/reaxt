@@ -16,6 +16,10 @@ defmodule Reaxt.Utils do
     bundler() == :webpack
   end
 
+  def is_hot?() do
+    Application.get_env(:reaxt, :hot, false)
+  end
+
   def server_dir() do
     Application.get_env(:reaxt, :server_dir, "react_servers")
   end
