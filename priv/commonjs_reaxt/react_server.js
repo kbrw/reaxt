@@ -57,7 +57,9 @@ Server(function(term,from,state,done){
     done("reply",Bert.tuple(Bert.atom("error"),Bert.tuple(Bert.atom("handler_error"),module,submodule,args,"timeout",Bert.atom("nil"))))
   },timeout)
 
-  import(`./../../components/${module}`).then((handler)=>{
+  let src_folder = args.src_folder || "components"
+
+  import(`./../../${src_folder}/${module}`).then((handler)=>{
     handler = handler.default
     submodule = (submodule == "nil") ? undefined : submodule
     handler = (!submodule) ? handler : handler[submodule]
