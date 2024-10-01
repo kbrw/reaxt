@@ -16,7 +16,7 @@ defmodule Reaxt.App do
     children = Enum.concat(base_processes, hot_reload_processes)
 
     result = Supervisor.start_link(children, name: __MODULE__, strategy: :one_for_one)
-    # WebPack.Util.build_stats()
+    if Reaxt.Utils.is_webpack?(), do: Reaxt.Index.Generator.build_webpack_stats()
 
     result
   end
@@ -30,7 +30,6 @@ defmodule Reaxt.App do
   end
 
   def hot_processes(_) do
-    Logger.warning("[Reaxt] Hot reload is not supported for bundle #{inspect Reaxt.Utils.bundler()}")
-    []
+    raise "[Reaxt] Hot reload is not supported for bundle #{inspect Reaxt.Utils.bundler()}"
   end
 end

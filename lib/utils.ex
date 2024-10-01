@@ -9,7 +9,7 @@ defmodule Reaxt.Utils do
   end
 
   def bundler() do
-    Application.get_env(:reaxt, :bundler, :webpack)
+    Application.get_env(:reaxt, :bundler)
   end
 
   def is_webpack?() do

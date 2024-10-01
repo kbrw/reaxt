@@ -38,7 +38,7 @@ defmodule Mix.Tasks.Webpack.Compile do
   end
 
   def compile() do
-    config = "./"<>WebPack.Util.webpack_config
+    config = "./"<>Reaxt.Webpack.webpack_config()
     webpack = @webpack
     System.cmd(
       "node",

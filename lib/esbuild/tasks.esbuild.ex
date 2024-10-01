@@ -36,7 +36,7 @@ defmodule Mix.Tasks.Compile.ReaxtEsbuild do
         Mix.Task.run("npm.install", args)
     end
 
-    if !Application.get_env(:reaxt, :hot) do
+    if !Reaxt.Utils.is_hot?() do
       Mix.Task.run("esbuild.compile", args)
     else
       {:ok, []}

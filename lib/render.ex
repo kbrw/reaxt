@@ -1,6 +1,14 @@
 defmodule Reaxt.Render do
   require Logger
 
+  def get_global_config do
+    Application.get_env(:reaxt, :global_config, %{})
+  end
+
+  def set_global_config(config) do
+    Application.put_env(:reaxt, :global_config, config)
+  end
+
   def render_result(chunk, module, data, timeout) when not is_tuple(module) do
     render_result(chunk, {module, nil}, data, timeout)
   end
@@ -17,7 +25,7 @@ defmodule Reaxt.Render do
         res
       {:error, err} ->
         try do
-          raise(ReaxtError, err)
+          raise(Reaxt.Error, err)
         rescue ex ->
           [_ | stack] = __STACKTRACE__
           # stack = List.wrap(ex[:js_stack]) |> Enum.concat(stack)
@@ -42,7 +50,7 @@ defmodule Reaxt.Render do
   end
 
   def reload do
-    if Reaxt.Utils.is_webpack?(), do: WebPack.Util.build_stats
+    if Reaxt.Utils.is_webpack?(), do: Reaxt.Index.Generator.build_webpack_stats()
     :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.PoolsSup)
     Supervisor.restart_child(Reaxt.App, Reaxt.PoolsSup)
   end

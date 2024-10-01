@@ -22,6 +22,16 @@ defmodule Mix.Tasks.Reaxt.Validate do
   end
 
   def validate(args) do
+    if Reaxt.Utils.bundler() not in [:webpack, :esbuild], do:
+      Mix.raise """
+              Reaxt :bundler is not configured.
+              Add following to config.exs
+
+                config :reaxt, :bundler, :webpack
+                OR
+                config :reaxt, :bundler, :esbuild
+              """
+
     if Reaxt.Utils.web_priv == :no_app_specified, do:
       Mix.raise """
                 Reaxt :otp_app is not configured.
@@ -31,7 +41,7 @@ defmodule Mix.Tasks.Reaxt.Validate do
 
                 """
 
-    packageJsonPath = Path.join(Reaxt.Utils.web_app, "package.json")
+    packageJsonPath = Path.join(Reaxt.Utils.web_app(), "package.json")
     if not File.exists?(packageJsonPath), do:
       Mix.raise """
                 Reaxt could not find a package.json in #{Reaxt.Utils.web_app}.
@@ -55,8 +65,9 @@ defmodule Mix.Tasks.Reaxt.Validate do
                   }
                 """
 
+    good_compilers = [:reaxt_webpack, :reaxt_esbuild]
     if (Enum.all?(args, &(&1 != "--reaxt-skip-compiler-check"))
-        and Enum.all? (Mix.Project.get!).project[:compilers], &(&1 != :reaxt_webpack)), do:
+        and not Enum.any?((Mix.Project.get!).project[:compilers], &(&1 in good_compilers))), do:
       Mix.raise """
                 Reaxt has a built in compiler that compiles the web app.
                 Remember to add it to the list of compilers in mix.exs:

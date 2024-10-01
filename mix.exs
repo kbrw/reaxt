@@ -24,19 +24,18 @@ defmodule Reaxt.Mixfile do
 
   def application do
     [applications: [:logger, :poolboy, :exos, :plug, :poison],
-     mod: {Reaxt.App,[]},
-     env: [
-       otp_app: :reaxt, #the OTP application containing compiled JS server
-       hot: false, # false | true | :client hot compilation and loading
-     ]]
+     mod: {Reaxt.App, []}
+    ]
   end
 
   defp deps do
-    [{:exos, "~> 2.0"},
+    [
+     {:exos, "~> 2.0"},
      {:poolboy, "~> 1.5"},
      {:plug, "~> 1.15"},
      {:poison,"~> 5.0"},
-     {:ex_doc, "~> 0.31", only: :dev, runtime: false}]
+     {:ex_doc, "~> 0.31", only: :dev, runtime: false}
+    ]
   end
 
   defp package do

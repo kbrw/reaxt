@@ -1,3 +1,9 @@
+defmodule Reaxt.Webpack do
+  def webpack_config do
+    Application.get_env(:reaxt,:webpack_config,"webpack.config.js")
+  end
+end
+
 defmodule WebPack.Hot.Events do
   def child_spec(_) do
     Registry.child_spec(keys: :duplicate, name: __MODULE__)
@@ -117,7 +123,7 @@ defmodule WebPack.Hot.EventManager do
 
   def handle_info({:event,%{event: "client_done"}=ev},state) do
     Logger.info("[reaxt-webpack] client done, build_stats")
-    WebPack.Util.build_stats
+    _ = Reaxt.Index.Generator.build_webpack_stats()
     if(!state.init) do
       Logger.info("[reaxt-webpack] client done, restart servers")
       :ok = Supervisor.terminate_child(Reaxt.App, Reaxt.PoolsSup)
@@ -137,8 +143,8 @@ defmodule WebPack.Hot.EventManager do
 
       _ -> :ok
     end
-    for {_idx,build}<-WebPack.stats, error<-build.errors, do: Logger.warning(error)
-    for {_idx,build}<-WebPack.stats, warning<-build.warnings, do: Logger.warning(warning)
+    for {_idx, build} <- Reaxt.Index.stats, error<-build.errors, do: Logger.warning(error)
+    for {_idx, build} <- Reaxt.Index.stats, warning<-build.warnings, do: Logger.warning(warning)
     {:noreply,done(state)}
   end
 
@@ -167,49 +173,8 @@ defmodule WebPack.Hot.Compiler do
     %{id: __MODULE__, start: {__MODULE__, :start_link, [arg]} }
   end
   def start_link(_) do
-    cmd = "node ./node_modules/reaxt/webpack_hot_server #{WebPack.Util.webpack_config}"
+    cmd = "node ./node_modules/reaxt/webpack_hot_server #{Reaxt.Webpack.webpack_config()}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
     Exos.Proc.start_link(cmd<>hot_arg,[],[cd: Reaxt.Utils.web_app],[name: __MODULE__],&WebPack.Hot.Events.dispatch/1)
   end
-end
-
-defmodule WebPack.Util do
-  def webpack_config do
-    Application.get_env(:reaxt,:webpack_config,"webpack.config.js")
-  end
-
-  def build_stats do
-    if File.exists?("#{Reaxt.Utils.web_priv()}/webpack.stats.json") do
-      all_stats = Poison.decode!(File.read!("#{Reaxt.Utils.web_priv()}/webpack.stats.json"))
-      stats_array = all_stats["children"]
-      stats = Enum.map(stats_array,fn stats->
-         %{assetsByChunkName: stats["assetsByChunkName"],
-           errors: stats["errors"],
-           warnings: stats["warnings"]}
-      end)
-      _ = Code.compiler_options(ignore_module_conflict: true)
-      defmodule Elixir.WebPack do
-        @stats stats
-        def stats, do: @stats
-        def file_of(name) do
-          r = Enum.find_value(WebPack.stats, fn %{assetsByChunkName: assets}-> assets["#{name}"] end)
-          case r do
-            [f|_]->f
-            f -> f
-          end
-        end
-        @header_script if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
-        @header_global Poison.encode!(Application.get_env(:reaxt,:global_config))
-        def header, do:
-          "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
-      end
-      _ = Code.compiler_options(ignore_module_conflict: false)
-    end
-  end
-end
-
-defmodule Elixir.WebPack do
-  def stats, do: %{assetsByChunkName: %{}}
-  def file_of(_), do: nil
-  def header, do: ""
 end
