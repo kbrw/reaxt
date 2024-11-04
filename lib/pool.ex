@@ -1,4 +1,7 @@
 defmodule Reaxt.PoolsSup do
+  @moduledoc """
+  Supervision of multiple :poolboy instances for the Server Side Rendering
+  """
   alias :poolboy, as: Pool
 
   use Supervisor
@@ -9,7 +12,7 @@ defmodule Reaxt.PoolsSup do
   end
 
   def start_link(arg) do
-    Supervisor.start_link(__MODULE__,arg, name: __MODULE__)
+    Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
   end
 
   def init(_) do
@@ -19,21 +22,28 @@ defmodule Reaxt.PoolsSup do
     server_files = Path.wildcard("#{server_dir}/*.js")
 
     if server_files == [] do
-      Logger.error("#server JS not yet compiled in #{server_dir}, compile it before with `mix webpack.compile`")
-      throw {:error, :serverjs_not_compiled}
-    else
-      children = Enum.map(server_files, fn server ->
-        parsed_js_name = server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/,"_")
-        pool_name = :"react_#{parsed_js_name}_pool"
+      Logger.error(
+        "#server JS not yet compiled in #{server_dir}, compile it before with `mix webpack.compile`"
+      )
 
-        args = [
-          worker_module: Reaxt.Render,
-          size: pool_size,
-          max_overflow: pool_overflow,
-          name: {:local, pool_name}
-        ]
-        Pool.child_spec(pool_name, args, server)
-      end)
+      throw({:error, :serverjs_not_compiled})
+    else
+      children =
+        Enum.map(server_files, fn server ->
+          parsed_js_name =
+            server |> Path.basename(".js") |> String.replace(~r/[0-9][a-z][A-Z]/, "_")
+
+          pool_name = :"react_#{parsed_js_name}_pool"
+
+          args = [
+            worker_module: Reaxt.Render,
+            size: pool_size,
+            max_overflow: pool_overflow,
+            name: {:local, pool_name}
+          ]
+
+          Pool.child_spec(pool_name, args, server)
+        end)
 
       Supervisor.init(children, strategy: :one_for_one)
     end

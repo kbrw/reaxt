@@ -18,23 +18,21 @@ defmodule Reaxt.Mixfile do
       elixir: "~> 1.12",
       deps: deps(),
       docs: docs(),
-      source_url: git_repository(),
+      source_url: git_repository()
     ]
   end
 
   def application do
-    [applications: [:logger, :poolboy, :exos, :plug, :poison],
-     mod: {Reaxt.App, []}
-    ]
+    [applications: [:logger, :poolboy, :exos, :plug, :poison], mod: {Reaxt.App, []}]
   end
 
   defp deps do
     [
-     {:exos, "~> 2.0"},
-     {:poolboy, "~> 1.5"},
-     {:plug, "~> 1.15"},
-     {:poison,"~> 5.0"},
-     {:ex_doc, "~> 0.31", only: :dev, runtime: false}
+      {:exos, "~> 2.0"},
+      {:poolboy, "~> 1.5"},
+      {:plug, "~> 1.15"},
+      {:poison, "~> 5.0"},
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
   end
 
@@ -43,9 +41,9 @@ defmodule Reaxt.Mixfile do
       licenses: ["The MIT License (MIT)"],
       links: %{
         "GitHub" => git_repository(),
-        "Changelog" => "https://hexdocs.pm/reaxt/changelog.html",
+        "Changelog" => "https://hexdocs.pm/reaxt/changelog.html"
       },
-      maintainers: ["Arnaud Wetzel"],
+      maintainers: ["Arnaud Wetzel"]
     ]
   end
 
@@ -53,12 +51,12 @@ defmodule Reaxt.Mixfile do
     [
       extras: [
         "CHANGELOG.md": [title: "Changelog"],
-        "README.md": [title: "Overview"],
+        "README.md": [title: "Overview"]
       ],
       api_reference: false,
       main: "readme",
       source_url: git_repository(),
-      source_ref: "v#{version()}",
+      source_ref: "v#{version()}"
     ]
   end
 

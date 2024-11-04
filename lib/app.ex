@@ -2,12 +2,13 @@ defmodule Reaxt.App do
   use Application
   require Logger
 
-  def start(_,_) do
-    hot_reload_processes = if Reaxt.Utils.is_hot?() do
-      hot_processes(Reaxt.Utils.bundler)
-    else
-      []
-    end
+  def start(_, _) do
+    hot_reload_processes =
+      if Reaxt.Utils.is_hot?() do
+        hot_processes(Reaxt.Utils.bundler())
+      else
+        []
+      end
 
     base_processes = [
       Reaxt.PoolsSup
@@ -25,11 +26,11 @@ defmodule Reaxt.App do
     [
       WebPack.Hot.Events,
       WebPack.Hot.EventManager,
-      WebPack.Hot.Compiler,
+      WebPack.Hot.Compiler
     ]
   end
 
   def hot_processes(_) do
-    raise "[Reaxt] Hot reload is not supported for bundle #{inspect Reaxt.Utils.bundler()}"
+    raise "[Reaxt] Hot reload is not supported for the bundler #{inspect(Reaxt.Utils.bundler())}"
   end
 end

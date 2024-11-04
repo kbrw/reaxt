@@ -10,6 +10,7 @@ defmodule Mix.Tasks.Esbuild.Compile do
 
   def compile() do
     config = "./" <> Reaxt.Esbuild.esbuild_config()
+
     System.cmd(
       "node",
       [config],
@@ -27,13 +28,20 @@ defmodule Mix.Tasks.Compile.ReaxtEsbuild do
     IO.puts("[Reaxt] Running Esbuild compiler...")
     Mix.Task.run("reaxt.validate", args ++ ["--reaxt-skip-compiler-check"])
 
-    if !File.exists?(Path.join(Reaxt.Utils.web_app, "node_modules")) do
+    if !File.exists?(Path.join(Reaxt.Utils.web_app(), "node_modules")) do
       Mix.Task.run("npm.install", args)
     else
-      installed_version = Poison.decode!(File.read!("#{Reaxt.Utils.web_app}/node_modules/reaxt/package.json"))["version"]
-      current_version = Poison.decode!(File.read!("#{:code.priv_dir(:reaxt)}/commonjs_reaxt/package.json"))["version"]
-      if  installed_version !== current_version, do:
-        Mix.Task.run("npm.install", args)
+      installed_version =
+        Poison.decode!(File.read!("#{Reaxt.Utils.web_app()}/node_modules/reaxt/package.json"))[
+          "version"
+        ]
+
+      current_version =
+        Poison.decode!(File.read!("#{:code.priv_dir(:reaxt)}/commonjs_reaxt/package.json"))[
+          "version"
+        ]
+
+      if installed_version !== current_version, do: Mix.Task.run("npm.install", args)
     end
 
     if !Reaxt.Utils.is_hot?() do
