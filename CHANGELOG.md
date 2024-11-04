@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+* Support for esbuild
+
 ### Changed
 
 * Updated poolboy, it itself now uses rebar3 to build.

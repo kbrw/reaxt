@@ -4,15 +4,6 @@ var webpack = require("webpack"),
 
 var multi_config = require(process.cwd()+"/"+process.argv[2])
 
-//if(process.argv[2] === "hot"){
-//    // add hotmodule plugin to client
-//    client_config.plugins = (client_config.plugins || []).concat([new webpack.HotModuleReplacementPlugin()])
-//    // add reloading code to entries
-//    client_config.add_to_entries(client_config,"webpack/hot/dev-server")
-//    // remove external which cause conflicts in hot loading
-//    client_config.externals = {}
-//}
-
 var client_stats,client_err
 function maybe_done() {
   if(client_err) port.write({event: "client_done", error: JSON.stringify(client_err)})
