@@ -4,9 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [4.1.1] - 2024-11-05
+
+### FIX
+
+* Fixed ReaxtWebpack compiler return.
+
+## [4.1.0] - 2024-02-27
+
+### Added
+
+* Forwarding MIX_ENV variable to webpack.
+
 ### Changed
 
 * Updated poolboy, it itself now uses rebar3 to build.
+* Upgraded the code to be compatible with Elixir 1.15.
 
 ## [4.0.2] - 2021-05-28
 
@@ -16,13 +29,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-* Updated webpack error messages handling
-* More detailed Reaxt errors
-* Js: updated `node_erlastic` deps to kbrw's scoped version
+* Updated webpack error messages handling.
+* More detailed Reaxt errors.
+* Js: updated `node_erlastic` deps to kbrw's scoped version.
 
 ### FIX
 
- * Removed `parallel-webpack` as it doesn't build with webpack 5
+* Removed `parallel-webpack` as it doesn't build with webpack 5.
 
 ## [4.0.1] - 2020-12-21
 
@@ -34,9 +47,9 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-* Breaking : upgraded targeted Elixir version from 1.0 to 1.10
-* Breaking : upgraded Webpack version from 3.3.0 to 5.1.3
-* Moved out of GenEvent
+* Breaking : upgraded targeted Elixir version from 1.0 to 1.10.
+* Breaking : upgraded Webpack version from 3.3.0 to 5.1.3.
+* Moved out of GenEvent.
 
 ## [3.0.1] - 2021-12-21
 
@@ -71,7 +84,9 @@ All notable changes to this project will be documented in this file.
 Changelog format inspired by [keep-a-changelog]
 
 [keep-a-changelog]: https://github.com/olivierlacan/keep-a-changelog
-[unreleased]: https://github.com/kbrw/reaxt/compare/v4.0.2...HEAD
+[unreleased]: https://github.com/kbrw/reaxt/compare/v4.1.1...HEAD
+[4.1.1]: https://github.com/kbrw/reaxt/compare/v4.1.0...v4.1.1
+[4.1.0]: https://github.com/kbrw/reaxt/compare/v4.0.2...v4.1.0
 [4.0.2]: https://github.com/kbrw/reaxt/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/kbrw/reaxt/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/kbrw/reaxt/compare/v3.0.0...v4.0.0
