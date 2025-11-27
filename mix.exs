@@ -39,7 +39,7 @@ defmodule Reaxt.Mixfile do
     [{:exos, "~> 2.0"},
      {:poolboy, "~> 1.5"},
      {:plug, "~> 1.15"},
-     {:poison,"~> 5.0"},
+     {:poison,"~> 6.0"},
      {:ex_doc, "~> 0.31", only: :dev, runtime: false}]
   end
 
