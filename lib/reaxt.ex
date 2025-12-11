@@ -17,7 +17,7 @@ defmodule ReaxtError do
       if String.contains?(url,"/priv") and !(function in ["Port.next_term","Socket.read_term"]) do
         {line,_} = Integer.parse(line)
         [_,after_priv] = String.split(url,"/priv/",parts: 2)
-        {JS,:"#{function}",0,file: '#{WebPack.Util.web_priv}/#{after_priv}', line: line}
+        {JS,:"#{function}",0,file: ~c'#{WebPack.Util.web_priv}/#{after_priv}', line: line}
       end
     end)
     |> Enum.filter(&!is_nil(&1))
@@ -70,7 +70,7 @@ defmodule Reaxt do
 
   def start_link(server_path) do
     init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-    Exos.Proc.start_link("node #{server_path}",init,[cd: '#{WebPack.Util.web_priv}'])
+    Exos.Proc.start_link("node #{server_path}",init,[cd: ~c'#{WebPack.Util.web_priv}'])
   end
 
   defmodule App do
