@@ -40,7 +40,7 @@ defmodule Reaxt do
       {:ok,res}->res
       {:error,err}->
         try do raise(ReaxtError,err)
-        rescue ex->
+        rescue ex in ReaxtError ->
           [_|stack] = __STACKTRACE__
           reraise ex, ((ex.js_stack || []) ++ stack)
         end
