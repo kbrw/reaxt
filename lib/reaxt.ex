@@ -70,7 +70,12 @@ defmodule Reaxt do
 
   def start_link(server_path) do
     init = Poison.encode!(Application.get_env(:reaxt,:global_config,nil))
-    Exos.Proc.start_link("node #{server_path}",init,[cd: ~c'#{WebPack.Util.web_priv}'])
+    Exos.Proc.start_link(
+      "node #{server_path}",
+      init,
+      port_opts: [cd: ~c'#{WebPack.Util.web_priv}'],
+      etf_opts: [minor_version: 1]
+    )
   end
 
   defmodule App do
