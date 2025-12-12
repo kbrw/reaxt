@@ -216,8 +216,8 @@ defmodule WebPack.Util do
             f -> f
           end
         end
-        @header_script if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
-        @header_global Poison.encode!(Application.get_env(:reaxt,:global_config))
+        @header_script if(Application.compile_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
+        @header_global Poison.encode!(Application.compile_env(:reaxt,:global_config))
         def header, do:
           "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
       end
