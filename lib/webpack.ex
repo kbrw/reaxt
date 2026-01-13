@@ -169,7 +169,14 @@ defmodule WebPack.Compiler do
   def start_link(_) do
     cmd = "node ./node_modules/reaxt/webpack_server #{WebPack.Util.webpack_config}"
     hot_arg = if Application.get_env(:reaxt,:hot) == :client, do: " hot",else: ""
-    Exos.Proc.start_link(cmd<>hot_arg,[],[cd: WebPack.Util.web_app],[name: __MODULE__],&WebPack.Events.dispatch/1)
+    Exos.Proc.start_link(
+      cmd<>hot_arg,
+      [],
+      port_opts: [cd: WebPack.Util.web_app],
+      gen_server_opts: [name: __MODULE__],
+      event_fun: &WebPack.Events.dispatch/1,
+      etf_opts: [minor_version: 1]
+    )
   end
 end
 
@@ -209,8 +216,8 @@ defmodule WebPack.Util do
             f -> f
           end
         end
-        @header_script if(Application.get_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
-        @header_global Poison.encode!(Application.get_env(:reaxt,:global_config))
+        @header_script if(Application.compile_env(:reaxt,:hot), do: ~s(<script src="/webpack/client.js"></script>))
+        @header_global Poison.encode!(Application.compile_env(:reaxt,:global_config))
         def header, do:
           "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
       end
