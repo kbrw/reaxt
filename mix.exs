@@ -1,7 +1,7 @@
 defmodule Reaxt.Mixfile do
   use Mix.Project
 
-  def version, do: "4.1.1"
+  def version, do: "4.1.2"
 
   defp description do
     """

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ## [4.1.2] - 2026-01-13
 
+### Changed
+
 * Made compatible with OTP26+ with the update with version 2.1.0 of dependency Exos
 * Upgraded the code to be compatible with Elixir 1.18
 
