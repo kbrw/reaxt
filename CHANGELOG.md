@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [4.1.2] - 2026-01-13
+
+* Made compatible with OTP26+ with the update with version 2.1.0 of dependency Exos
+* Upgraded the code to be compatible with Elixir 1.18
+
 ## [4.1.1] - 2024-11-05
 
 ### FIX
@@ -84,7 +89,8 @@ All notable changes to this project will be documented in this file.
 Changelog format inspired by [keep-a-changelog]
 
 [keep-a-changelog]: https://github.com/olivierlacan/keep-a-changelog
-[unreleased]: https://github.com/kbrw/reaxt/compare/v4.1.1...HEAD
+[unreleased]: https://github.com/kbrw/reaxt/compare/v4.1.2...HEAD
+[4.1.2]: https://github.com/kbrw/reaxt/compare/v4.1.1...v4.1.2
 [4.1.1]: https://github.com/kbrw/reaxt/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/kbrw/reaxt/compare/v4.0.2...v4.1.0
 [4.0.2]: https://github.com/kbrw/reaxt/compare/v4.0.1...v4.0.2
