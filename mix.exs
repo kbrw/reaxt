@@ -36,7 +36,7 @@ defmodule Reaxt.Mixfile do
   end
 
   defp deps do
-    [{:exos, git: "https://github.com/vle-kbrw/exos.git", branch: "compatibility-pre-otp26"},
+    [{:exos, "~> 2.0"},
      {:poolboy, "~> 1.5"},
      {:plug, "~> 1.15"},
      {:poison,"~> 6.0"},
