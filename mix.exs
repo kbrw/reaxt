@@ -1,7 +1,7 @@
 defmodule Reaxt.Mixfile do
   use Mix.Project
 
-  def version, do: "4.1.2"
+  def version, do: "4.1.3"
 
   defp description do
     """
@@ -23,7 +23,7 @@ defmodule Reaxt.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :poolboy, :exos, :plug, :poison],
+    [extra_applications: [:logger, :poolboy, :exos, :plug, :poison],
      mod: {Reaxt.App,[]},
      env: [
        otp_app: :reaxt, #the OTP application containing compiled JS server

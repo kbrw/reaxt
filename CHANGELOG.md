@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [4.1.3] - 2026-08-20
+
+### Changed
+
+* Force garbage collection at the end of a call to `WebPack.Util.build_stats/0`.
+  It is typically used in at application start up, and in processes that don't move much,
+  so the performance impact is expected to be low.
+  Note that this only concerns `:dev` builds. `:prod` builds don't use Webpack.
+
 ## [4.1.2] - 2026-01-13
 
 ### Changed

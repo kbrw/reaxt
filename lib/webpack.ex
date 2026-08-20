@@ -222,6 +222,7 @@ defmodule WebPack.Util do
           "<script>window.global_reaxt_config=#{@header_global}</script>\n#{@header_script}"
       end
       _ = Code.compiler_options(ignore_module_conflict: false)
+      true = :erlang.garbage_collect()
     end
   end
 end
