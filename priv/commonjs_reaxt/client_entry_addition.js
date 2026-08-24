@@ -6,7 +6,8 @@ function default_client_render(props,render,param){
 }
 
 window.reaxt_render = function(module,submodule,props,param){
-  return import(`./../../components/${module}`).then((module)=>{
+  let src_folder = props.src_folder || "components"
+  return import(`./../../${src_folder}/${module}`).then((module)=>{
     module = module.default
     submodule = (submodule) ? module[submodule] :module
     submodule.reaxt_client_render = submodule.reaxt_client_render || default_client_render
