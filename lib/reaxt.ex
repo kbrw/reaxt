@@ -47,9 +47,9 @@ defmodule Reaxt do
     end
   end
 
-  def render(module,data, timeout \\ 5_000) do
+  def render(module,data, timeout \\ 5_000, chunk \\ :server) do
     try do
-      render!(module,data,timeout)
+      render!(module, data, timeout, chunk)
     rescue
       ex->
         case ex do
